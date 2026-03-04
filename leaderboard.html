@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WayArena - Game Over</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(180deg, #1a0a1a 0%, #2d0e2d 50%, #1a0a1a 100%);
+      font-family: 'VT323', monospace;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Header Section */
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .game-over-title {
+      font-family: 'Press Start 2P', cursive;
+      font-size: clamp(28px, 6vw, 48px);
+      color: #ffd700;
+      text-shadow: 
+        4px 4px 0 #b8860b,
+        6px 6px 0 #8b6914,
+        0 0 30px rgba(255, 215, 0, 0.5);
+      animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+      transform: scale(0.5);
+      margin-bottom: 25px;
+    }
+
+    @keyframes bounceIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      70% { transform: scale(1.05); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .stat-chips {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .stat-chip {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 11px;
+      padding: 12px 18px;
+      border-radius: 25px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: slideUp 0.5s ease-out forwards;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .stat-chip.stuns {
+      background: linear-gradient(135deg, #006b7a 0%, #00e5ff 100%);
+      border: 2px solid #00e5ff;
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+      animation-delay: 0.3s;
+    }
+
+    .stat-chip.stunned {
+      background: linear-gradient(135deg, #7a1a3a 0%, #ff3d7f 100%);
+      border: 2px solid #ff3d7f;
+      box-shadow: 0 0 15px rgba(255, 61, 127, 0.4);
+      animation-delay: 0.4s;
+    }
+
+    @keyframes slideUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Leaderboard Section */
+    .leaderboard-wrapper {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .leaderboard {
+      max-height: calc(100vh - 250px);
+      overflow-y: auto;
+      padding-right: 5px;
+      scrollbar-width: thin;
+      scrollbar-color: #d4a96a #1a0a1a;
+    }
+
+    .leaderboard::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .leaderboard::-webkit-scrollbar-track {
+      background: #1a0a1a;
+      border-radius: 4px;
+    }
+
+    .leaderboard::-webkit-scrollbar-thumb {
+      background: #d4a96a;
+      border-radius: 4px;
+    }
+
+    .leaderboard::after {
+      content: '';
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: linear-gradient(transparent, #1a0a1a);
+      pointer-events: none;
+      display: block;
+    }
+
+    .fade-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: linear-gradient(transparent, #1a0a1a);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .leaderboard-row {
+      display: grid;
+      grid-template-columns: 60px 1fr 90px;
+      align-items: center;
+      padding: 14px 18px;
+      margin-bottom: 10px;
+      border-radius: 12px;
+      background: rgba(45, 14, 45, 0.8);
+      border: 2px solid rgba(212, 169, 106, 0.2);
+      opacity: 0;
+      transform: translateY(30px);
+      will-change: transform, opacity;
+      animation: rowSlideIn 0.4s ease-out forwards;
+    }
+
+    @keyframes rowSlideIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Top 3 Special Styles */
+    .leaderboard-row.rank-1 {
+      background: linear-gradient(135deg, #3d2a00 0%, #5c4000 50%, #3d2a00 100%);
+      border: 3px solid #ffd700;
+      box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+      animation: rowSlideIn 0.4s ease-out forwards, goldPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes goldPulse {
+      0%, 100% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.4); }
+      50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.7), 0 0 60px rgba(255, 215, 0, 0.3); }
+    }
+
+    /* Gold confetti sparkles */
+    .leaderboard-row.rank-1::before,
+    .leaderboard-row.rank-1::after {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #ffd700;
+      animation: sparkle 1.5s ease-in-out infinite;
+    }
+
+    .leaderboard-row.rank-1::before {
+      top: 10px;
+      right: 30px;
+      animation-delay: 0s;
+    }
+
+    .leaderboard-row.rank-1::after {
+      top: 20px;
+      right: 60px;
+      animation-delay: 0.5s;
+    }
+
+    .sparkle-1, .sparkle-2, .sparkle-3 {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: #ffd700;
+      animation: sparkle 1.5s ease-in-out infinite;
+    }
+
+    .sparkle-1 { top: 8px; right: 100px; animation-delay: 0.3s; }
+    .sparkle-2 { bottom: 10px; right: 40px; animation-delay: 0.7s; }
+    .sparkle-3 { bottom: 15px; right: 90px; animation-delay: 1s; }
+
+    @keyframes sparkle {
+      0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+      50% { opacity: 1; transform: scale(1) rotate(180deg); }
+    }
+
+    .leaderboard-row.rank-2 {
+      background: linear-gradient(135deg, #2a2a30 0%, #4a4a55 50%, #2a2a30 100%);
+      border: 3px solid #c0c0c0;
+      box-shadow: 0 0 20px rgba(192, 192, 192, 0.3);
+      animation: rowSlideIn 0.4s ease-out forwards, silverPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes silverPulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(192, 192, 192, 0.3); }
+      50% { box-shadow: 0 0 35px rgba(192, 192, 192, 0.5); }
+    }
+
+    .leaderboard-row.rank-3 {
+      background: linear-gradient(135deg, #3d2615 0%, #6b4423 50%, #3d2615 100%);
+      border: 3px solid #cd7f32;
+      box-shadow: 0 0 20px rgba(205, 127, 50, 0.3);
+      animation: rowSlideIn 0.4s ease-out forwards, bronzePulse 2s ease-in-out infinite;
+    }
+
+    @keyframes bronzePulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(205, 127, 50, 0.3); }
+      50% { box-shadow: 0 0 35px rgba(205, 127, 50, 0.5); }
+    }
+
+    .rank {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .rank-1 .rank { color: #ffd700; font-size: 18px; }
+    .rank-2 .rank { color: #c0c0c0; font-size: 16px; }
+    .rank-3 .rank { color: #cd7f32; font-size: 16px; }
+
+    .medal {
+      font-size: 20px;
+      margin-right: 5px;
+    }
+
+    .rank-1 .medal { font-size: 26px; }
+
+    .player-name {
+      font-family: 'VT323', monospace;
+      font-size: 26px;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0 10px;
+    }
+
+    .rank-1 .player-name {
+      font-size: 30px;
+      color: #ffd700;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+
+    .stun-count {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 12px;
+      color: #00e5ff;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .rank-1 .stun-count {
+      font-size: 14px;
+      color: #39ff14;
+    }
+
+    .lightning {
+      font-size: 16px;
+    }
+
+    .rank-1 .lightning {
+      font-size: 20px;
+    }
+
+    .stun-number {
+      min-width: 30px;
+      text-align: right;
+    }
+
+    /* Regular rows subtle styling */
+    .leaderboard-row:not(.rank-1):not(.rank-2):not(.rank-3) {
+      border-color: rgba(212, 169, 106, 0.15);
+    }
+
+    .leaderboard-row:not(.rank-1):not(.rank-2):not(.rank-3):hover {
+      border-color: rgba(212, 169, 106, 0.4);
+      background: rgba(60, 20, 60, 0.9);
+    }
+
+    .leaderboard-row:not(.rank-1):not(.rank-2):not(.rank-3) .rank {
+      color: #d4a96a;
+      font-size: 12px;
+    }
+
+    /* Footer decoration */
+    .footer-decoration {
+      text-align: center;
+      padding: 20px;
+      margin-top: 20px;
+    }
+
+    .pixel-divider {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .pixel-square {
+      width: 8px;
+      height: 8px;
+      background: #d4a96a;
+      animation: pixelBlink 1s ease-in-out infinite;
+    }
+
+    .pixel-square:nth-child(2) { animation-delay: 0.2s; }
+    .pixel-square:nth-child(3) { animation-delay: 0.4s; }
+    .pixel-square:nth-child(4) { animation-delay: 0.6s; }
+    .pixel-square:nth-child(5) { animation-delay: 0.8s; }
+
+    @keyframes pixelBlink {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="game-over-title">GAME OVER!</h1>
+      <div class="stat-chips">
+        <div class="stat-chip stuns">
+          <span>⚡</span>
+          <span>YOUR STUNS: <span class="count-up" data-target="30">0</span></span>
+        </div>
+        <div class="stat-chip stunned">
+          <span>💀</span>
+          <span>GOT STUNNED: <span class="count-up" data-target="14">0</span></span>
+        </div>
+      </div>
+    </header>
+
+    <div class="leaderboard-wrapper">
+      <div class="leaderboard" id="leaderboard"></div>
+      <div class="fade-bottom"></div>
+    </div>
+
+    <div class="footer-decoration">
+      <div class="pixel-divider">
+        <div class="pixel-square"></div>
+        <div class="pixel-square"></div>
+        <div class="pixel-square"></div>
+        <div class="pixel-square"></div>
+        <div class="pixel-square"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const leaderboardData = [
+      { name: "karararan", stuns: 30 },
+      { name: "Sanskar", stuns: 21 },
+      { name: "ANKITG X DEEPAKC", stuns: 11 },
+      { name: "rachit", stuns: 8 },
+      { name: "Astha", stuns: 5 },
+      { name: "Shourya", stuns: 3 },
+      { name: "PixelMaster99", stuns: 3 },
+      { name: "ArenaKing", stuns: 2 },
+      { name: "StunLord", stuns: 2 },
+      { name: "BattleBot", stuns: 2 },
+      { name: "QuizWhiz", stuns: 1 },
+      { name: "NeonNinja", stuns: 1 },
+      { name: "RetroRaider", stuns: 1 },
+      { name: "PixelPuncher", stuns: 1 },
+      { name: "ArcadeAce", stuns: 0 },
+      { name: "GameGuru", stuns: 0 }
+    ];
+
+    function getMedal(rank) {
+      if (rank === 1) return '<span class="medal">🏆</span>';
+      if (rank === 2) return '<span class="medal">🥈</span>';
+      if (rank === 3) return '<span class="medal">🥉</span>';
+      return '';
+    }
+
+    function getRankClass(rank) {
+      if (rank === 1) return 'rank-1';
+      if (rank === 2) return 'rank-2';
+      if (rank === 3) return 'rank-3';
+      return '';
+    }
+
+    function createLeaderboard() {
+      const container = document.getElementById('leaderboard');
+      
+      leaderboardData.forEach((player, index) => {
+        const rank = index + 1;
+        const row = document.createElement('div');
+        row.className = `leaderboard-row ${getRankClass(rank)}`;
+        row.style.animationDelay = `${0.5 + (index * 0.08)}s`;
+        
+        let sparkles = '';
+        if (rank === 1) {
+          sparkles = `
+            <div class="sparkle-1"></div>
+            <div class="sparkle-2"></div>
+            <div class="sparkle-3"></div>
+          `;
+        }
+        
+        row.innerHTML = `
+          ${sparkles}
+          <div class="rank">${getMedal(rank)}${rank}</div>
+          <div class="player-name">${player.name}</div>
+          <div class="stun-count">
+            <span class="lightning">⚡</span>
+            <span class="stun-number count-up-row" data-target="${player.stuns}">0</span>
+          </div>
+        `;
+        
+        container.appendChild(row);
+      });
+    }
+
+    function animateCountUp(element, target, duration = 800) {
+      const startTime = performance.now();
+      const startValue = 0;
+      
+      function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const currentValue = Math.floor(startValue + (target - startValue) * easeOut);
+        
+        element.textContent = currentValue;
+        
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        } else {
+          element.textContent = target;
+        }
+      }
+      
+      requestAnimationFrame(update);
+    }
+
+    function startCountUpAnimations() {
+      document.querySelectorAll('.count-up').forEach((el, index) => {
+        const target = parseInt(el.dataset.target, 10);
+        setTimeout(() => {
+          animateCountUp(el, target, 800);
+        }, 400 + (index * 100));
+      });
+
+      document.querySelectorAll('.count-up-row').forEach((el, index) => {
+        const target = parseInt(el.dataset.target, 10);
+        setTimeout(() => {
+          animateCountUp(el, target, 600);
+        }, 600 + (index * 80));
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      createLeaderboard();
+      startCountUpAnimations();
+    });
+  </script>
+</body>
+</html>

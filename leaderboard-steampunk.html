@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WayArena - Leaderboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(180deg, rgba(58, 26, 7, 0.98) 0%, rgba(26, 10, 5, 1) 100%);
+      font-family: 'VT323', monospace;
+      color: #fbbf24;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 30px 20px;
+      min-height: 100vh;
+    }
+
+    .leaderboard-container {
+      background: linear-gradient(180deg, rgba(58, 26, 7, 0.98) 0%, rgba(26, 10, 5, 1) 100%);
+      border: 3px solid #d97706;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 
+        0 0 20px rgba(217, 119, 6, 0.3),
+        inset 0 0 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .leaderboard-header {
+      text-align: center;
+      font-family: 'Press Start 2P', cursive;
+      font-size: clamp(20px, 5vw, 28px);
+      font-weight: 900;
+      color: #fbbf24;
+      margin-bottom: 24px;
+      letter-spacing: 2px;
+      text-shadow: 
+        0 0 15px rgba(251, 191, 36, 0.6),
+        3px 3px 0 #b45309;
+      animation: headerGlow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes headerGlow {
+      0% { text-shadow: 0 0 15px rgba(251, 191, 36, 0.6), 3px 3px 0 #b45309; }
+      100% { text-shadow: 0 0 25px rgba(251, 191, 36, 0.9), 3px 3px 0 #b45309; }
+    }
+
+    .leaderboard-wrapper {
+      position: relative;
+      max-height: calc(100vh - 200px);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #d97706 rgba(26, 10, 5, 0.5);
+    }
+
+    .leaderboard-wrapper::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .leaderboard-wrapper::-webkit-scrollbar-track {
+      background: rgba(26, 10, 5, 0.5);
+      border-radius: 4px;
+    }
+
+    .leaderboard-wrapper::-webkit-scrollbar-thumb {
+      background: #d97706;
+      border-radius: 4px;
+    }
+
+    .fade-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: linear-gradient(transparent, rgba(26, 10, 5, 1));
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 8px;
+    }
+
+    .table-header th {
+      font-family: 'Press Start 2P', cursive;
+      font-size: clamp(10px, 2vw, 14px);
+      font-weight: 700;
+      color: #d97706;
+      text-align: center;
+      padding: 12px 8px;
+      letter-spacing: 1px;
+      border-bottom: 2px solid rgba(217, 119, 6, 0.3);
+    }
+
+    .table-header th:first-child {
+      text-align: left;
+      padding-left: 16px;
+    }
+
+    .table-header th:last-child {
+      text-align: right;
+      padding-right: 16px;
+    }
+
+    .leaderboard-row {
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 8px;
+      opacity: 0;
+      transform: translateY(20px);
+      will-change: transform, opacity;
+      animation: rowFadeIn 0.4s ease-out forwards;
+    }
+
+    .leaderboard-row td {
+      padding: 14px 12px;
+      text-align: center;
+      font-weight: 700;
+      color: #fbbf24;
+      border-top: 2px solid #d97706;
+      border-bottom: 2px solid #d97706;
+    }
+
+    .leaderboard-row td:first-child {
+      border-left: 2px solid #d97706;
+      border-radius: 8px 0 0 8px;
+      text-align: left;
+      padding-left: 16px;
+    }
+
+    .leaderboard-row td:last-child {
+      border-right: 2px solid #d97706;
+      border-radius: 0 8px 8px 0;
+      text-align: right;
+      padding-right: 16px;
+    }
+
+    @keyframes rowFadeIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .leaderboard-row.rank-1 {
+      background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+      box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+      animation: rowFadeIn 0.4s ease-out forwards, goldPulse 2s ease-in-out infinite;
+    }
+
+    .leaderboard-row.rank-1 td {
+      color: #1a0a05;
+      border-color: #fbbf24;
+      font-size: 1.1em;
+    }
+
+    @keyframes goldPulse {
+      0%, 100% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.6); }
+      50% { box-shadow: 0 0 35px rgba(251, 191, 36, 0.9), 0 0 50px rgba(251, 191, 36, 0.4); }
+    }
+
+    .leaderboard-row.rank-2 {
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+      box-shadow: 0 0 15px rgba(217, 119, 6, 0.4);
+    }
+
+    .leaderboard-row.rank-2 td {
+      color: #1a0a05;
+      border-color: #d97706;
+    }
+
+    .leaderboard-row.rank-3 {
+      background: linear-gradient(135deg, #b45309 0%, #92400e 100%);
+      box-shadow: 0 0 12px rgba(180, 83, 9, 0.4);
+    }
+
+    .leaderboard-row.rank-3 td {
+      color: #fbbf24;
+      border-color: #b45309;
+    }
+
+    .leaderboard-row:not(.rank-1):not(.rank-2):not(.rank-3):nth-child(even) {
+      background: rgba(0, 0, 0, 0.35);
+    }
+
+    .leaderboard-row:not(.rank-1):not(.rank-2):not(.rank-3):hover {
+      background: rgba(217, 119, 6, 0.15);
+      transform: scale(1.01);
+      transition: all 0.2s ease;
+    }
+
+    .rank-cell {
+      font-family: 'Press Start 2P', cursive;
+      font-size: clamp(12px, 2.5vw, 16px);
+      min-width: 60px;
+    }
+
+    .rank-1 .rank-cell {
+      font-size: clamp(14px, 3vw, 18px);
+    }
+
+    .medal {
+      margin-right: 6px;
+      font-size: 1.2em;
+    }
+
+    .name-cell {
+      font-family: 'VT323', monospace;
+      font-size: clamp(22px, 4vw, 28px);
+      text-align: left !important;
+      padding-left: 12px !important;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+    }
+
+    .rank-1 .name-cell {
+      font-size: clamp(26px, 4.5vw, 32px);
+      text-shadow: 0 0 10px rgba(26, 10, 5, 0.5);
+    }
+
+    .stuns-cell {
+      font-family: 'Press Start 2P', cursive;
+      font-size: clamp(12px, 2.5vw, 16px);
+    }
+
+    .stuns-icon {
+      margin-right: 4px;
+    }
+
+    .accuracy-cell {
+      font-family: 'Press Start 2P', cursive;
+      font-size: clamp(11px, 2vw, 14px);
+    }
+
+    .footer-decoration {
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .gear {
+      width: 12px;
+      height: 12px;
+      background: #d97706;
+      border-radius: 2px;
+      animation: gearSpin 3s linear infinite;
+    }
+
+    .gear:nth-child(2) { animation-delay: 0.5s; }
+    .gear:nth-child(3) { animation-delay: 1s; }
+    .gear:nth-child(4) { animation-delay: 1.5s; }
+    .gear:nth-child(5) { animation-delay: 2s; }
+
+    @keyframes gearSpin {
+      0% { transform: rotate(0deg); opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { transform: rotate(360deg); opacity: 0.5; }
+    }
+
+    .decorative-border {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .border-line {
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #d97706, transparent);
+    }
+
+    .border-icon {
+      color: #d97706;
+      font-size: 16px;
+    }
+
+    .top-accuracy-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #00e5ff 0%, #0099cc 100%);
+      color: #1a0a05;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 8px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      margin-left: 6px;
+      animation: accuracyPulse 2s ease-in-out infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes accuracyPulse {
+      0%, 100% { box-shadow: 0 0 8px rgba(0, 229, 255, 0.4); }
+      50% { box-shadow: 0 0 15px rgba(0, 229, 255, 0.7); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="leaderboard-container">
+      <h1 class="leaderboard-header">🎯 LEADERBOARD</h1>
+      
+      <div class="decorative-border">
+        <div class="border-line"></div>
+        <span class="border-icon">⚙</span>
+        <div class="border-line"></div>
+      </div>
+
+      <div class="leaderboard-wrapper">
+        <table class="leaderboard-table">
+          <thead>
+            <tr class="table-header">
+              <th>#</th>
+              <th>NAME</th>
+              <th>STUNS</th>
+              <th>ACC</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body">
+          </tbody>
+        </table>
+      </div>
+
+      <div class="footer-decoration">
+        <div class="gear"></div>
+        <div class="gear"></div>
+        <div class="gear"></div>
+        <div class="gear"></div>
+        <div class="gear"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const leaderboardData = [
+      { rank: 1, name: "Alex", stuns: 12, accuracy: 94 },
+      { rank: 2, name: "Sam", stuns: 10, accuracy: 89 },
+      { rank: 3, name: "Kim", stuns: 8, accuracy: 87 },
+      { rank: 4, name: "Pat", stuns: 7, accuracy: 82 },
+      { rank: 5, name: "Lee", stuns: 6, accuracy: 78 },
+      { rank: 6, name: "Jay", stuns: 5, accuracy: 75 },
+      { rank: 7, name: "Rio", stuns: 4, accuracy: 71 },
+      { rank: 8, name: "Max", stuns: 3, accuracy: 68 },
+      { rank: 9, name: "Ava", stuns: 2, accuracy: 65 },
+      { rank: 10, name: "Zoe", stuns: 1, accuracy: 60 }
+    ];
+
+    function getMedal(rank) {
+      return '';
+    }
+
+    function getRankClass(rank) {
+      if (rank === 1) return 'rank-1';
+      if (rank === 2) return 'rank-2';
+      if (rank === 3) return 'rank-3';
+      return '';
+    }
+
+    function createLeaderboard() {
+      const tbody = document.getElementById('leaderboard-body');
+      const maxAccuracy = Math.max(...leaderboardData.map(p => p.accuracy));
+      
+      leaderboardData.forEach((player, index) => {
+        const row = document.createElement('tr');
+        row.className = `leaderboard-row ${getRankClass(player.rank)}`;
+        row.style.animationDelay = `${0.1 + (index * 0.1)}s`;
+        
+        const isTopAcc = player.accuracy === maxAccuracy;
+        const accBadge = isTopAcc ? '<span class="top-accuracy-badge">TOP</span>' : '';
+        
+        row.innerHTML = `
+          <td class="rank-cell">${getMedal(player.rank)}${player.rank}</td>
+          <td class="name-cell">${player.name}</td>
+          <td class="stuns-cell"><span class="stuns-icon">⚡</span><span class="count-up" data-target="${player.stuns}">0</span></td>
+          <td class="accuracy-cell"><span class="count-up-acc" data-target="${player.accuracy}">0</span>%${accBadge}</td>
+        `;
+        
+        tbody.appendChild(row);
+      });
+    }
+
+    function animateCountUp(element, target, duration = 800, suffix = '') {
+      const startTime = performance.now();
+      
+      function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        const currentValue = Math.floor(target * easeOut);
+        
+        element.textContent = currentValue + suffix;
+        
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        } else {
+          element.textContent = target + suffix;
+        }
+      }
+      
+      requestAnimationFrame(update);
+    }
+
+    function startCountUpAnimations() {
+      document.querySelectorAll('.count-up').forEach((el, index) => {
+        const target = parseInt(el.dataset.target, 10);
+        setTimeout(() => {
+          animateCountUp(el, target, 600);
+        }, 300 + (index * 100));
+      });
+
+      document.querySelectorAll('.count-up-acc').forEach((el, index) => {
+        const target = parseInt(el.dataset.target, 10);
+        setTimeout(() => {
+          animateCountUp(el, target, 600);
+        }, 300 + (index * 100));
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      createLeaderboard();
+      startCountUpAnimations();
+    });
+  </script>
+</body>
+</html>

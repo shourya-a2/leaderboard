@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayarena HUD Recreation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: url('BG.png') center center;
+            background-size: cover;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        .game-container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* HUD Bar at Top */
+        .hud-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 8px 12px;
+            background: linear-gradient(to bottom, #e8e0d4, #d4ccc0);
+            border-bottom: 3px solid #4a7bb5;
+        }
+
+        .left-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .wayarena-logo {
+            height: 50px;
+            width: auto;
+        }
+
+        .health-bar-avatar {
+            height: 45px;
+            width: auto;
+        }
+
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spell-nav {
+            height: 30px;
+            width: auto;
+        }
+
+        .stun-score {
+            height: 26px;
+            width: auto;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            gap: 40px;
+        }
+
+        /* Question Box */
+        .question-box {
+            background: rgba(30, 30, 40, 0.95);
+            border-radius: 16px;
+            padding: 24px 40px;
+            max-width: 700px;
+            text-align: center;
+            position: relative;
+        }
+
+        .question-text {
+            color: #ffffff;
+            font-size: 22px;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .question-timer {
+            position: absolute;
+            bottom: -15px;
+            right: 20px;
+            background: rgba(50, 50, 60, 0.95);
+            color: #ffffff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Answer Cards Container */
+        .answers-container {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            max-width: 1400px;
+            padding: 0 20px;
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Individual Answer Card */
+        .answer-card {
+            flex: 1;
+            height: 280px;
+            border-radius: 12px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 50px;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 3px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .answer-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .answer-card.blue {
+            background: linear-gradient(to bottom, #4da6ff, #0066cc);
+        }
+
+        .answer-card.teal {
+            background: linear-gradient(to bottom, #40c9c9, #00a3a3);
+        }
+
+        .answer-card.orange {
+            background: linear-gradient(to bottom, #ffb84d, #ff9500);
+        }
+
+        .answer-card.pink {
+            background: linear-gradient(to bottom, #ff6b9d, #e91e63);
+        }
+
+        .answer-text {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .answer-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #ffffff;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .answers-container {
+                flex-wrap: wrap;
+            }
+
+            .answer-card {
+                flex: 1 1 calc(50% - 6px);
+                height: 180px;
+            }
+
+            .question-text {
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .answer-card {
+                flex: 1 1 100%;
+                height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- HUD Bar -->
+        <div class="hud-container">
+            <div class="left-section">
+                <img src="wayarena thumbnail.png" alt="Wayarena Logo" class="wayarena-logo">
+                <img src="health bar and avatar.png" alt="Health Bar with Avatar" class="health-bar-avatar">
+            </div>
+            <div class="right-section">
+                <img src="Spell nav.png" alt="Spell Navigation" class="spell-nav">
+                <img src="Stun score.png" alt="Stun Score" class="stun-score">
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Question Box -->
+            <div class="question-box">
+                <p class="question-text">Ali wanted a kitten, so he decided to become a volunteer at the animal shelter. He was hoping t</p>
+                <div class="question-timer">18/30</div>
+            </div>
+        </div>
+
+        <!-- Answer Cards -->
+        <div class="answers-container">
+            <div class="answer-card blue">
+                <span class="answer-badge">2</span>
+                <span class="answer-text">Egyptian</span>
+            </div>
+            <div class="answer-card teal">
+                <span class="answer-badge">2</span>
+                <span class="answer-text">Inca</span>
+            </div>
+            <div class="answer-card orange">
+                <span class="answer-badge">2</span>
+                <span class="answer-text">Greek</span>
+            </div>
+            <div class="answer-card pink">
+                <span class="answer-badge">2</span>
+                <span class="answer-text">Roman</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

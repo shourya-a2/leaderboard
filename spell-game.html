@@ -1,0 +1,2355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayarena - Spell Unlock Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Spell Colors - Full */
+            --spell-red: #FF4444;
+            --spell-red-glow: rgba(255, 68, 68, 0.6);
+            --spell-red-bg: #8B2635;
+            --spell-cyan: #00FFFF;
+            --spell-cyan-glow: rgba(0, 255, 255, 0.6);
+            --spell-cyan-bg: #00CED1;
+            --spell-green: #00FF00;
+            --spell-green-glow: rgba(0, 255, 0, 0.6);
+            --spell-green-bg: #32CD32;
+            
+            /* Spell Colors - Muted (for partial progress) */
+            --spell-red-muted: #FF7F7F;
+            --spell-cyan-muted: #87CEEB;
+            --spell-green-muted: #90EE90;
+            
+            /* Success Colors */
+            --success-gold: #FFD700;
+            --checkmark-green: #00FF00;
+            
+            /* Wrong Feedback */
+            --wrong-gray: #999999;
+            
+            /* Card Colors */
+            --card-blue: #1E90FF;
+            --card-blue-dark: #1565C0;
+            --card-cyan: #00CED1;
+            --card-cyan-dark: #00838F;
+            --card-orange: #FFA500;
+            --card-orange-dark: #E65100;
+            --card-pink: #FF69B4;
+            --card-pink-dark: #C2185B;
+            
+            /* Timing */
+            --bounce-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --smooth-ease: cubic-bezier(0.4, 0, 0.2, 1);
+            
+            /* Circle math */
+            --large-circumference: 471; /* 2 * PI * 75 (large circle r=75) */
+            --hud-circumference: 188; /* 2 * PI * 30 (HUD circle r=30) */
+        }
+
+        body {
+            min-height: 100vh;
+            background: url('BG.png') center center;
+            background-size: cover;
+            font-family: 'Fredoka', system-ui, sans-serif;
+            overflow: hidden;
+        }
+
+        .game-container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* ==================== TOP HUD BAR ==================== */
+        .hud-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(to bottom, rgba(30, 35, 50, 0.98), rgba(20, 25, 40, 0.95));
+            border-bottom: 3px solid #4a90d9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 16px;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .hud-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .wayarena-logo {
+            height: 46px;
+            width: auto;
+        }
+
+        .score-badge {
+            position: absolute;
+            top: -2px;
+            right: -6px;
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+            min-width: 20px;
+            height: 20px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #166534;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Avatar + Health Bar Combined Image */
+        .avatar-health-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .avatar-health-img {
+            height: 42px;
+            width: auto;
+            transition: transform 0.3s var(--bounce-ease);
+        }
+
+        .avatar-health-container.celebrating .avatar-health-img {
+            animation: avatarCelebrate 0.6s var(--bounce-ease);
+        }
+
+        @keyframes avatarCelebrate {
+            0% { transform: scale(1) translateY(0); }
+            25% { transform: scale(1.08) translateY(-3px); }
+            50% { transform: scale(1.05) translateY(-1px); }
+            75% { transform: scale(1.06) translateY(-2px); }
+            100% { transform: scale(1) translateY(0); }
+        }
+
+        .emote-bubble {
+            position: absolute;
+            top: -18px;
+            left: 20px;
+            transform: translateX(-50%) scale(0);
+            font-size: 16px;
+            background: white;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+            pointer-events: none;
+            z-index: 150;
+        }
+
+        .emote-bubble.animate {
+            animation: emotePop 0.8s var(--bounce-ease) forwards;
+        }
+
+        @keyframes emotePop {
+            0% { transform: translateX(-50%) scale(0); opacity: 0; }
+            30% { transform: translateX(-50%) scale(1.2); opacity: 1; }
+            50% { transform: translateX(-50%) scale(1); opacity: 1; }
+            80% { transform: translateX(-50%) scale(1); opacity: 1; }
+            100% { transform: translateX(-50%) scale(0); opacity: 0; }
+        }
+
+        /* HUD Right (in top bar) */
+        .hud-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .spell-slots-bar {
+            display: flex;
+            gap: 8px;
+        }
+
+        .spell-slot-hud {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .spell-slot-hud:hover.unlocked {
+            transform: scale(1.1);
+        }
+
+        .spell-slot-hud .slot-bg {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+
+        .spell-slot-hud .slot-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: filter 0.3s ease;
+        }
+
+        .spell-slot-hud.empty .slot-image {
+            filter: grayscale(0.8) brightness(0.5);
+        }
+
+        .spell-slot-hud.partial .slot-image {
+            filter: grayscale(0.4) brightness(0.7);
+        }
+
+        .spell-slot-hud.unlocked .slot-image {
+            filter: none;
+        }
+
+        .spell-slot-hud .progress-ring-hud {
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            width: calc(100% + 6px);
+            height: calc(100% + 6px);
+            transform: rotate(-90deg);
+            pointer-events: none;
+        }
+
+        .spell-slot-hud .ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.1);
+            stroke-width: 2;
+        }
+
+        .spell-slot-hud .ring-progress {
+            fill: none;
+            stroke-width: 3;
+            stroke-linecap: round;
+            stroke-dasharray: 151; /* 2 * PI * 24 */
+            stroke-dashoffset: 151;
+            transition: stroke-dashoffset 0.4s var(--bounce-ease);
+        }
+
+        .spell-slot-hud .ring-progress.red { stroke: var(--spell-red); filter: drop-shadow(0 0 4px var(--spell-red)); }
+        .spell-slot-hud .ring-progress.yellow { stroke: #f59e0b; filter: drop-shadow(0 0 4px #f59e0b); }
+        .spell-slot-hud .ring-progress.green { stroke: var(--spell-green); filter: drop-shadow(0 0 4px var(--spell-green)); }
+
+        .spell-slot-hud.dock-pulse {
+            animation: dockPulse 0.4s var(--bounce-ease);
+        }
+
+        @keyframes dockPulse {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        /* Stuns Badge */
+        .stuns-badge {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            padding: 5px 12px 5px 8px;
+            border-radius: 18px;
+            border: 2px solid #15803d;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .stuns-badge .lightning {
+            font-size: 16px;
+            filter: drop-shadow(0 0 4px #fbbf24);
+        }
+
+        .stuns-badge .stuns-text {
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ==================== RIGHT SIDE SPELL HUD ==================== */
+        .spell-hud-right {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            z-index: 100;
+        }
+
+        .spell-circle-slot {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        .spell-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 6px;
+            text-align: center;
+            font-weight: 600;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .spell-circle-container {
+            width: 60px;
+            height: 60px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Background Circle */
+        .spell-circle-bg {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: absolute;
+            transition: filter 0.3s ease, transform 0.3s ease;
+        }
+
+        .spell-circle-bg.blue-bg { background: #00CED1; }
+        .spell-circle-bg.green-bg { background: #32CD32; }
+        .spell-circle-bg.red-bg { background: #8B2635; }
+
+        /* Stroke Ring SVG */
+        .stroke-ring {
+            width: 68px;
+            height: 68px;
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            transform: rotate(-90deg);
+        }
+
+        .stroke-fill {
+            transition: stroke-dashoffset 0.4s ease-out, stroke 0.3s ease;
+            filter: drop-shadow(0 0 4px currentColor);
+        }
+
+        .stroke-fill.blue-stroke { stroke: #00BFFF; }
+        .stroke-fill.green-stroke { stroke: #00FF00; }
+        .stroke-fill.red-stroke { stroke: #FF4444; }
+
+        .stroke-fill.muted.blue-stroke { stroke: #87CEEB; }
+        .stroke-fill.muted.green-stroke { stroke: #90EE90; }
+        .stroke-fill.muted.red-stroke { stroke: #FF7F7F; }
+
+        /* Wand Icon */
+        .wand-icon {
+            font-size: 28px;
+            position: relative;
+            z-index: 2;
+            opacity: 0.6;
+            transition: opacity 0.3s ease, filter 0.3s ease, transform 0.3s ease;
+        }
+
+        /* Progress Text */
+        .progress-text {
+            position: absolute;
+            bottom: -20px;
+            font-size: 12px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        /* Glow States */
+        .spell-circle-slot.glowing-bright .spell-circle-container {
+            animation: glow-pulse-bright 0.4s ease-out;
+        }
+
+        .spell-circle-slot.glowing-dim .spell-circle-container {
+            animation: glow-pulse-dim 0.3s ease-out;
+        }
+
+        @keyframes glow-pulse-bright {
+            0% { 
+                transform: scale(1);
+                filter: drop-shadow(0 0 0px white);
+            }
+            40% { 
+                transform: scale(1.15);
+                filter: drop-shadow(0 0 30px white) drop-shadow(0 0 60px white);
+            }
+            100% { 
+                transform: scale(1.05);
+                filter: drop-shadow(0 0 20px white);
+            }
+        }
+
+        @keyframes glow-pulse-dim {
+            0% { 
+                transform: scale(1);
+                filter: drop-shadow(0 0 0px white);
+            }
+            40% { 
+                transform: scale(1.08);
+                filter: drop-shadow(0 0 15px rgba(255,255,255,0.5)) drop-shadow(0 0 30px rgba(255,255,255,0.3));
+            }
+            100% { 
+                transform: scale(1.02);
+                filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));
+            }
+        }
+
+        /* Wand glow during animation */
+        .spell-circle-slot.glowing-bright .wand-icon {
+            opacity: 1;
+            filter: drop-shadow(0 0 8px white);
+            animation: wand-pulse 0.4s ease-out;
+        }
+
+        .spell-circle-slot.glowing-dim .wand-icon {
+            opacity: 0.8;
+            animation: wand-pulse-subtle 0.3s ease-out;
+        }
+
+        @keyframes wand-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        @keyframes wand-pulse-subtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        /* Empty State */
+        .spell-circle-slot.empty .spell-circle-bg {
+            filter: brightness(0.5) saturate(0.5);
+        }
+
+        .spell-circle-slot.empty .wand-icon {
+            opacity: 0.4;
+        }
+
+        /* Partial State */
+        .spell-circle-slot.partial .spell-circle-bg {
+            filter: brightness(0.7) saturate(0.7);
+        }
+
+        .spell-circle-slot.partial .wand-icon {
+            opacity: 0.7;
+        }
+
+        /* Unlocked State */
+        .spell-circle-slot.unlocked .spell-circle-bg {
+            filter: brightness(1.3);
+        }
+
+        .spell-circle-slot.unlocked .wand-icon {
+            opacity: 1;
+            filter: drop-shadow(0 0 6px white);
+        }
+
+        .spell-circle-slot.unlocked .stroke-fill {
+            filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 16px currentColor);
+            animation: stroke-glow-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes stroke-glow-pulse {
+            0%, 100% { 
+                filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 16px currentColor);
+            }
+            50% { 
+                filter: drop-shadow(0 0 12px currentColor) drop-shadow(0 0 24px currentColor);
+            }
+        }
+
+        .spell-circle-slot.unlocked .spell-circle-container {
+            animation: unlocked-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes unlocked-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        /* Dock animation for right HUD */
+        .spell-circle-slot.dock-pulse .spell-circle-container {
+            animation: dockPulseRight 0.4s var(--bounce-ease);
+        }
+
+        @keyframes dockPulseRight {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        /* Particle Styles */
+        .spell-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particle-burst 0.5s ease-out forwards;
+        }
+
+        @keyframes particle-burst {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        /* Float up fade animation */
+        @keyframes float-up-fade {
+            0% { 
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% { 
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+        }
+
+
+        /* ==================== MAIN CONTENT ==================== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 80px 20px 20px 20px;
+        }
+
+        /* ==================== QUESTION BOX ==================== */
+        .question-box {
+            background: rgba(25, 25, 35, 0.95);
+            border-radius: 20px;
+            padding: 28px 48px;
+            max-width: 700px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .question-text {
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .question-timer {
+            position: absolute;
+            bottom: -18px;
+            right: 24px;
+            background: rgba(45, 45, 55, 0.98);
+            color: #ffffff;
+            padding: 8px 18px;
+            border-radius: 24px;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* ==================== ANSWER CARDS ==================== */
+        .answers-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            width: 100%;
+            max-width: 1300px;
+            padding: 0 24px 0 24px;
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .answer-card {
+            height: 200px;
+            border-radius: 16px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 35px;
+            position: relative;
+            cursor: pointer;
+            border: 4px solid rgba(0, 0, 0, 0.2);
+            overflow: visible;
+            animation: cardFloat 3s ease-in-out infinite;
+            transition: transform 0.15s ease-out, 
+                        box-shadow 0.15s ease-out, 
+                        opacity 0.3s ease, 
+                        filter 0.3s ease,
+                        border-color 0.2s ease;
+            will-change: transform, opacity;
+        }
+
+        @keyframes cardFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        .answer-card:nth-child(1) { animation-delay: 0s; }
+        .answer-card:nth-child(2) { animation-delay: 0.2s; }
+        .answer-card:nth-child(3) { animation-delay: 0.4s; }
+        .answer-card:nth-child(4) { animation-delay: 0.6s; }
+
+        .answer-card.blue { background: linear-gradient(to bottom, var(--card-blue), var(--card-blue-dark)); }
+        .answer-card.cyan { background: linear-gradient(to bottom, var(--card-cyan), var(--card-cyan-dark)); }
+        .answer-card.orange { background: linear-gradient(to bottom, var(--card-orange), var(--card-orange-dark)); }
+        .answer-card.pink { background: linear-gradient(to bottom, var(--card-pink), var(--card-pink-dark)); }
+
+        .answer-card:hover:not(.disabled):not(.selected) {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255,255,255,0.15);
+            filter: brightness(1.1);
+            animation: none;
+        }
+
+        .answer-card:active:not(.disabled):not(.selected) {
+            transform: scale(0.97) rotate(2deg);
+            filter: brightness(0.95);
+            transition: transform 0.08s ease-in;
+        }
+
+        .answer-card.disabled {
+            opacity: 0.3;
+            filter: grayscale(0.5);
+            transform: scale(0.95);
+            cursor: not-allowed;
+            animation: none;
+            pointer-events: none;
+        }
+
+        .answer-card.selected {
+            animation: none;
+            z-index: 10;
+        }
+
+        .answer-card.selected.correct {
+            transform: scale(1.15);
+            border: 4px solid var(--success-gold);
+            box-shadow: 0 0 40px var(--success-gold), 0 0 80px rgba(255, 215, 0, 0.4);
+            animation: correctGlow 0.8s ease-out infinite alternate;
+        }
+
+        @keyframes correctGlow {
+            0% { box-shadow: 0 0 30px var(--success-gold), 0 0 60px rgba(255, 215, 0, 0.3); }
+            100% { box-shadow: 0 0 50px var(--success-gold), 0 0 100px rgba(255, 215, 0, 0.5); }
+        }
+
+        .answer-card.selected.wrong {
+            animation: wrongShake 0.3s linear;
+        }
+
+        @keyframes wrongShake {
+            0% { transform: translateX(0); opacity: 1; }
+            20% { transform: translateX(-8px); opacity: 0.7; }
+            40% { transform: translateX(8px); opacity: 0.7; }
+            60% { transform: translateX(-6px); opacity: 0.8; }
+            80% { transform: translateX(6px); opacity: 0.9; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        .card-flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            border-radius: 12px;
+        }
+
+        .answer-card.selected.correct .card-flash {
+            animation: flashBright 0.2s ease-out;
+        }
+
+        @keyframes flashBright {
+            0% { opacity: 0; }
+            40% { opacity: 0.9; }
+            100% { opacity: 0; }
+        }
+
+        .card-checkmark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 90px;
+            color: var(--checkmark-green);
+            text-shadow: 0 0 30px var(--checkmark-green), 0 0 60px rgba(0, 255, 0, 0.5);
+            pointer-events: none;
+            opacity: 0;
+            z-index: 5;
+        }
+
+        .answer-card.selected.correct .card-checkmark {
+            animation: checkmarkPop 0.4s var(--bounce-ease) forwards;
+        }
+
+        @keyframes checkmarkPop {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0) rotate(-20deg); }
+            60% { opacity: 1; transform: translate(-50%, -50%) scale(1.2) rotate(5deg); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+        }
+
+        .card-xmark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 60px;
+            color: var(--wrong-gray);
+            pointer-events: none;
+            opacity: 0;
+            z-index: 5;
+        }
+
+        .answer-card.selected.wrong .card-xmark {
+            animation: xmarkFade 0.4s ease-out forwards;
+        }
+
+        @keyframes xmarkFade {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            25% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+            75% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        }
+
+        .answer-text {
+            color: #ffffff;
+            font-size: 26px;
+            font-weight: 700;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+            position: relative;
+            z-index: 2;
+        }
+
+        .answer-badge {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: rgba(0, 0, 0, 0.35);
+            color: #ffffff;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            z-index: 2;
+        }
+
+        /* ==================== CENTER STAGE OVERLAY ==================== */
+        .center-stage-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .center-stage-overlay.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .center-stage-overlay.visible .overlay-backdrop {
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .center-stage-overlay.partial .overlay-backdrop {
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .overlay-backdrop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0);
+            transition: background 0.3s ease;
+        }
+
+        /* ==================== CENTER STAGE CIRCLES ==================== */
+        .center-circles-container {
+            position: relative;
+            display: flex;
+            gap: 40px;
+            z-index: 1001;
+        }
+
+        .center-circle {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            opacity: 0;
+            transform: scale(0);
+            transition: opacity 0.3s ease, transform 0.3s var(--bounce-ease);
+        }
+
+        .center-circle.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .center-circle.complete {
+            animation: circleCompletePulse 0.3s var(--bounce-ease);
+        }
+
+        @keyframes circleCompletePulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        .center-circle .center-progress-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .center-spell-image {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 130px;
+            height: 130px;
+            object-fit: contain;
+            border-radius: 50%;
+            z-index: 1;
+            transition: filter 0.3s ease, transform 0.3s var(--bounce-ease);
+        }
+
+        .center-circle.dimmed .center-spell-image {
+            filter: grayscale(0.6) brightness(0.5);
+        }
+
+        .center-circle.filling .center-spell-image {
+            animation: iconPulse 0.6s ease-in-out;
+            filter: grayscale(0.3) brightness(0.8);
+        }
+
+        .center-circle.complete .center-spell-image {
+            filter: none drop-shadow(0 0 15px white);
+            animation: iconBrighten 0.3s var(--bounce-ease);
+        }
+
+        .center-circle-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 4;
+        }
+
+        .center-circle-progress {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: var(--large-circumference);
+            stroke-dashoffset: var(--large-circumference);
+            transition: stroke-dashoffset 0.6s ease-out;
+        }
+
+        .center-circle-progress.red { 
+            stroke: var(--spell-red); 
+            filter: drop-shadow(0 0 12px var(--spell-red)) drop-shadow(0 0 24px rgba(255, 100, 50, 0.5)); 
+        }
+        .center-circle-progress.yellow { 
+            stroke: #f59e0b; 
+            filter: drop-shadow(0 0 12px #f59e0b) drop-shadow(0 0 24px rgba(245, 158, 11, 0.5)); 
+        }
+        .center-circle-progress.green { 
+            stroke: var(--spell-green); 
+            filter: drop-shadow(0 0 12px var(--spell-green)) drop-shadow(0 0 24px rgba(50, 255, 100, 0.5)); 
+        }
+
+        .center-circle-progress.muted.red { stroke: var(--spell-red-muted); filter: drop-shadow(0 0 4px var(--spell-red-muted)); }
+        .center-circle-progress.muted.yellow { stroke: #fcd34d; filter: drop-shadow(0 0 4px #fcd34d); }
+        .center-circle-progress.muted.green { stroke: var(--spell-green-muted); filter: drop-shadow(0 0 4px var(--spell-green-muted)); }
+
+
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); filter: brightness(0.7); }
+            50% { transform: scale(1.1); filter: brightness(1.2); }
+        }
+
+        @keyframes iconBrighten {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2) rotate(360deg); filter: brightness(1.5) drop-shadow(0 0 20px white); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+
+        /* Center stage text */
+        .center-stage-text {
+            position: absolute;
+            top: -60px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 36px;
+            font-weight: 800;
+            color: white;
+            text-shadow: 0 0 20px var(--checkmark-green), 0 4px 8px rgba(0,0,0,0.5);
+            opacity: 0;
+            white-space: nowrap;
+        }
+
+        .center-stage-text.visible {
+            animation: textPop 0.4s var(--bounce-ease) forwards;
+        }
+
+        .center-stage-text.partial {
+            color: rgba(255,255,255,0.8);
+            text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+            font-size: 28px;
+        }
+
+        @keyframes textPop {
+            0% { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.8); }
+            100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+        }
+
+        .spell-charged-text {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--success-gold);
+            text-shadow: 0 0 15px var(--success-gold);
+            opacity: 0;
+            white-space: nowrap;
+        }
+
+        .spell-charged-text.visible {
+            animation: chargedPop 0.4s var(--bounce-ease) forwards;
+        }
+
+        @keyframes chargedPop {
+            0% { opacity: 0; transform: translateX(-50%) scale(0.8); }
+            100% { opacity: 1; transform: translateX(-50%) scale(1); }
+        }
+
+        /* ==================== FLYING CIRCLES ==================== */
+        .flying-circle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 2000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flying-circle svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .flying-circle-inner {
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flying-circle-icon {
+            object-fit: contain;
+        }
+
+        .flying-trail {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1999;
+        }
+
+        .flying-trail.red { background: radial-gradient(circle, white, var(--spell-red)); box-shadow: 0 0 10px var(--spell-red); }
+        .flying-trail.yellow { background: radial-gradient(circle, white, #f59e0b); box-shadow: 0 0 10px #f59e0b; }
+        .flying-trail.green { background: radial-gradient(circle, white, var(--spell-green)); box-shadow: 0 0 10px var(--spell-green); }
+        .flying-trail.gray { background: radial-gradient(circle, white, #888); box-shadow: 0 0 6px #888; }
+
+        /* ==================== SPARKLE PARTICLES ==================== */
+        .sparkle-particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: sparkleBurst 0.6s ease-out forwards;
+        }
+
+        @keyframes sparkleBurst {
+            0% { opacity: 1; transform: translate(0, 0) scale(1); }
+            100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0); }
+        }
+
+        .stroke-sparkle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: strokeSparkle 0.4s ease-out forwards;
+        }
+
+        @keyframes strokeSparkle {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0) translate(var(--tx), var(--ty)); }
+        }
+
+        /* ==================== CONFETTI ==================== */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 500;
+            overflow: hidden;
+        }
+
+        /* ==================== DEMO CONTROLS ==================== */
+        .demo-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 500;
+            background: rgba(0,0,0,0.85);
+            padding: 16px;
+            border-radius: 16px;
+            backdrop-filter: blur(8px);
+            max-width: 160px;
+        }
+
+        .demo-title {
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        .demo-btn {
+            padding: 10px 12px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .demo-btn:hover { transform: scale(1.05); }
+        .demo-btn:active { transform: scale(0.95); }
+
+        .demo-btn.correct {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            color: white;
+        }
+
+        .demo-btn.wrong {
+            background: linear-gradient(135deg, #94a3b8, #64748b);
+            color: white;
+        }
+
+        .demo-btn.reset {
+            background: linear-gradient(135deg, #f472b6, #ec4899);
+            color: white;
+        }
+
+        .demo-btn.auto {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+        }
+
+        .demo-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.2);
+            margin: 4px 0;
+        }
+
+        .demo-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: white;
+            font-size: 10px;
+        }
+
+        .demo-toggle input { cursor: pointer; }
+
+        /* ==================== ACCESSIBILITY ==================== */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Top HUD Bar -->
+        <div class="hud-bar">
+            <div class="hud-left">
+                <!-- Logo with score badge -->
+                <div class="logo-container">
+                    <img src="wayarena thumbnail.png" alt="Wayarena" class="wayarena-logo">
+                    <div class="score-badge" id="score-badge">0</div>
+                </div>
+
+                <!-- Avatar + Health Bar (combined image) -->
+                <div class="avatar-health-container" id="avatar-container">
+                    <img src="health bar and avatar.png" alt="Avatar and Health" class="avatar-health-img" id="avatar">
+                    <div class="emote-bubble" id="emote-bubble">✨</div>
+                </div>
+            </div>
+
+            <div class="hud-right">
+                <!-- Spell Slots -->
+                <div class="spell-slots-bar">
+                    <div class="spell-slot-hud empty" data-slot="1" id="slot-1">
+                        <div class="slot-bg">
+                            <img src="Spell 5.png" class="slot-image" alt="Spell 1">
+                        </div>
+                        <svg class="progress-ring-hud" viewBox="0 0 50 50">
+                            <circle class="ring-bg" cx="25" cy="25" r="24"/>
+                            <circle class="ring-progress red" cx="25" cy="25" r="24" id="slot-1-progress"/>
+                        </svg>
+                    </div>
+                    <div class="spell-slot-hud empty" data-slot="2" id="slot-2">
+                        <div class="slot-bg">
+                            <img src="Spell 4.png" class="slot-image" alt="Spell 2">
+                        </div>
+                        <svg class="progress-ring-hud" viewBox="0 0 50 50">
+                            <circle class="ring-bg" cx="25" cy="25" r="24"/>
+                            <circle class="ring-progress yellow" cx="25" cy="25" r="24" id="slot-2-progress"/>
+                        </svg>
+                    </div>
+                    <div class="spell-slot-hud empty" data-slot="3" id="slot-3">
+                        <div class="slot-bg">
+                            <img src="Spell 3 circle.png" class="slot-image" alt="Spell 3">
+                        </div>
+                        <svg class="progress-ring-hud" viewBox="0 0 50 50">
+                            <circle class="ring-bg" cx="25" cy="25" r="24"/>
+                            <circle class="ring-progress green" cx="25" cy="25" r="24" id="slot-3-progress"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Stuns Badge -->
+                <div class="stuns-badge">
+                    <span class="lightning">⚡</span>
+                    <span class="stuns-text">Stuns <span id="stuns-count">1</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="question-box">
+                <p class="question-text">Which ancient civilization built the Great Pyramid of Giza?</p>
+                <div class="question-timer">18/30</div>
+            </div>
+        </div>
+
+        <!-- Answer Cards -->
+        <div class="answers-container">
+            <div class="answer-card blue" data-answer="egyptian" data-correct="true">
+                <div class="card-flash"></div>
+                <span class="card-checkmark">✓</span>
+                <span class="card-xmark">✗</span>
+                <span class="answer-badge">2</span>
+                <span class="answer-text">Egyptian</span>
+            </div>
+            <div class="answer-card cyan" data-answer="inca" data-correct="false">
+                <div class="card-flash"></div>
+                <span class="card-checkmark">✓</span>
+                <span class="card-xmark">✗</span>
+                <span class="answer-badge">2</span>
+                <span class="answer-text">Inca</span>
+            </div>
+            <div class="answer-card orange" data-answer="greek" data-correct="false">
+                <div class="card-flash"></div>
+                <span class="card-checkmark">✓</span>
+                <span class="card-xmark">✗</span>
+                <span class="answer-badge">2</span>
+                <span class="answer-text">Greek</span>
+            </div>
+            <div class="answer-card pink" data-answer="roman" data-correct="false">
+                <div class="card-flash"></div>
+                <span class="card-checkmark">✓</span>
+                <span class="card-xmark">✗</span>
+                <span class="answer-badge">2</span>
+                <span class="answer-text">Roman</span>
+            </div>
+        </div>
+
+        <!-- Confetti Container -->
+        <div class="confetti-container" id="confetti-container"></div>
+
+        <!-- Right Side Spell HUD -->
+        <div class="spell-hud-right">
+            <!-- Spell 1: magicMissile (Blue/Cyan) -->
+            <div class="spell-circle-slot empty" data-spell="magicMissile" id="spell-slot-magic">
+                <label class="spell-label">Spell 5</label>
+                <div class="spell-circle-container">
+                    <svg class="stroke-ring" viewBox="0 0 68 68">
+                        <circle class="stroke-bg" cx="34" cy="34" r="30" stroke="#333" stroke-width="1" fill="none" opacity="0.2" />
+                        <circle class="stroke-fill blue-stroke" cx="34" cy="34" r="30" stroke="#00BFFF" stroke-width="6" fill="none" 
+                                stroke-linecap="round" stroke-dasharray="188.4" stroke-dashoffset="188.4" id="spell-stroke-magic"/>
+                    </svg>
+                    <div class="spell-circle-bg blue-bg"></div>
+                    <span class="wand-icon">🪄</span>
+                    <div class="progress-text" id="progress-text-magic"></div>
+                </div>
+            </div>
+
+            <!-- Spell 2: scatterShot (Green) -->
+            <div class="spell-circle-slot empty" data-spell="scatterShot" id="spell-slot-scatter">
+                <label class="spell-label">Spell 4</label>
+                <div class="spell-circle-container">
+                    <svg class="stroke-ring" viewBox="0 0 68 68">
+                        <circle class="stroke-bg" cx="34" cy="34" r="30" stroke="#333" stroke-width="1" fill="none" opacity="0.2" />
+                        <circle class="stroke-fill green-stroke" cx="34" cy="34" r="30" stroke="#00FF00" stroke-width="6" fill="none"
+                                stroke-linecap="round" stroke-dasharray="188.4" stroke-dashoffset="188.4" id="spell-stroke-scatter"/>
+                    </svg>
+                    <div class="spell-circle-bg green-bg"></div>
+                    <span class="wand-icon">🪄</span>
+                    <div class="progress-text" id="progress-text-scatter"></div>
+                </div>
+            </div>
+
+            <!-- Spell 3: rapidFire (Red) -->
+            <div class="spell-circle-slot empty" data-spell="rapidFire" id="spell-slot-rapid">
+                <label class="spell-label">Spell 3</label>
+                <div class="spell-circle-container">
+                    <svg class="stroke-ring" viewBox="0 0 68 68">
+                        <circle class="stroke-bg" cx="34" cy="34" r="30" stroke="#333" stroke-width="1" fill="none" opacity="0.2" />
+                        <circle class="stroke-fill red-stroke" cx="34" cy="34" r="30" stroke="#FF4444" stroke-width="6" fill="none"
+                                stroke-linecap="round" stroke-dasharray="188.4" stroke-dashoffset="188.4" id="spell-stroke-rapid"/>
+                    </svg>
+                    <div class="spell-circle-bg red-bg"></div>
+                    <span class="wand-icon">🪄</span>
+                    <div class="progress-text" id="progress-text-rapid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Stage Overlay -->
+        <div class="center-stage-overlay" id="center-stage">
+            <div class="overlay-backdrop"></div>
+            <div class="center-circles-container" id="center-circles">
+                <div class="center-stage-text" id="stage-text">✓ CORRECT!</div>
+                
+                <div class="center-circle dimmed" id="center-circle-1">
+                    <svg viewBox="0 0 160 160" class="center-progress-ring">
+                        <circle class="center-circle-bg" cx="80" cy="80" r="75"/>
+                        <circle class="center-circle-progress red" cx="80" cy="80" r="75" id="center-progress-1"/>
+                    </svg>
+                    <img src="Spell 5.png" class="center-spell-image" alt="Spell 3">
+                </div>
+                
+                <div class="center-circle dimmed" id="center-circle-2">
+                    <svg viewBox="0 0 160 160" class="center-progress-ring">
+                        <circle class="center-circle-bg" cx="80" cy="80" r="75"/>
+                        <circle class="center-circle-progress yellow" cx="80" cy="80" r="75" id="center-progress-2"/>
+                    </svg>
+                    <img src="Spell 4.png" class="center-spell-image" alt="Spell 4">
+                </div>
+                
+                <div class="center-circle dimmed" id="center-circle-3">
+                    <svg viewBox="0 0 160 160" class="center-progress-ring">
+                        <circle class="center-circle-bg" cx="80" cy="80" r="75"/>
+                        <circle class="center-circle-progress green" cx="80" cy="80" r="75" id="center-progress-3"/>
+                    </svg>
+                    <img src="Spell 3 circle.png" class="center-spell-image" alt="Spell 5">
+                </div>
+                
+                <div class="spell-charged-text" id="charged-text">SPELL CHARGED!</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demo Controls -->
+    <div class="demo-controls">
+        <div class="demo-title">🎮 Demo</div>
+        <button class="demo-btn correct" onclick="demoCorrect()">✓ Correct</button>
+        <button class="demo-btn wrong" onclick="demoWrong()">✗ Wrong</button>
+        <button class="demo-btn reset" onclick="resetGame()">↺ Reset</button>
+        <div class="demo-divider"></div>
+        <button class="demo-btn auto" onclick="autoDemo()">▶ Auto</button>
+        <div class="demo-divider"></div>
+        <label class="demo-toggle">
+            <input type="checkbox" id="skip-toggle">
+            ⏩ Fast
+        </label>
+    </div>
+
+    <script>
+        // ==================== GAME STATE ====================
+        const state = {
+            // Spell progress: [Rapid Fire (red), Magic Missile (cyan), Scatter Shot (green)]
+            spellProgress: {
+                rapidFire: 0,      // Red - slot 1
+                magicMissile: 0,   // Cyan - slot 2
+                scatterShot: 0     // Green - slot 3
+            },
+            isAnimating: false,
+            selectedCard: null,
+            skipAnimations: false,
+            score: 0,
+            stuns: 1
+        };
+
+        // Progress increments
+        const PROGRESS_CORRECT = {
+            rapidFire: 9,
+            magicMissile: 10,
+            scatterShot: 6
+        };
+        const PROGRESS_WRONG = {
+            rapidFire: 9,
+            magicMissile: 6,
+            scatterShot: 3
+        };
+
+        // Constants
+        const LARGE_CIRCUMFERENCE = 471; // 2 * PI * 75
+        const HUD_CIRCUMFERENCE = 151;   // 2 * PI * 24 (HUD ring)
+        const SPELL_KEYS = ['rapidFire', 'magicMissile', 'scatterShot'];
+        const COLORS = ['red', 'yellow', 'green'];
+        const SPELL_CIRCLES = ['Spell 5.png', 'Spell 4.png', 'Spell 3 circle.png']; // Red, Yellow/Cyan, Green
+
+        // ==================== DOM ELEMENTS ====================
+        const cards = document.querySelectorAll('.answer-card');
+        const centerStage = document.getElementById('center-stage');
+        const stageText = document.getElementById('stage-text');
+        const chargedText = document.getElementById('charged-text');
+        const confettiContainer = document.getElementById('confetti-container');
+        const avatarContainer = document.getElementById('avatar-container');
+        const emoteBubble = document.getElementById('emote-bubble');
+        const scoreBadge = document.getElementById('score-badge');
+        const stunsCount = document.getElementById('stuns-count');
+
+        const centerCircles = [
+            document.getElementById('center-circle-1'),
+            document.getElementById('center-circle-2'),
+            document.getElementById('center-circle-3')
+        ];
+        const centerProgress = [
+            document.getElementById('center-progress-1'),
+            document.getElementById('center-progress-2'),
+            document.getElementById('center-progress-3')
+        ];
+        const slots = [
+            document.getElementById('slot-1'),
+            document.getElementById('slot-2'),
+            document.getElementById('slot-3')
+        ];
+        const slotProgress = [
+            document.getElementById('slot-1-progress'),
+            document.getElementById('slot-2-progress'),
+            document.getElementById('slot-3-progress')
+        ];
+
+        // Right side HUD elements
+        const spellSlots = {
+            magicMissile: document.getElementById('spell-slot-magic'),
+            scatterShot: document.getElementById('spell-slot-scatter'),
+            rapidFire: document.getElementById('spell-slot-rapid')
+        };
+        const spellStrokes = {
+            magicMissile: document.getElementById('spell-stroke-magic'),
+            scatterShot: document.getElementById('spell-stroke-scatter'),
+            rapidFire: document.getElementById('spell-stroke-rapid')
+        };
+        const progressTexts = {
+            magicMissile: document.getElementById('progress-text-magic'),
+            scatterShot: document.getElementById('progress-text-scatter'),
+            rapidFire: document.getElementById('progress-text-rapid')
+        };
+        const SPELL_CIRCUMFERENCE = 188.4; // 2 * PI * 30
+
+        // ==================== UTILITY ====================
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, state.skipAnimations ? ms * 0.3 : ms));
+        }
+
+        // Calculate progress increments based on correct/wrong
+        function calculateProgress(isCorrect) {
+            const increments = isCorrect ? PROGRESS_CORRECT : PROGRESS_WRONG;
+            return {
+                rapidFire: increments.rapidFire,
+                magicMissile: increments.magicMissile,
+                scatterShot: increments.scatterShot
+            };
+        }
+
+        // Check which spells will newly unlock with given increments
+        function getNewlyUnlockedSpells(increments) {
+            const newlyUnlocked = [];
+            SPELL_KEYS.forEach((key, idx) => {
+                const oldProgress = state.spellProgress[key];
+                const newProgress = oldProgress + increments[key];
+                if (oldProgress < 100 && newProgress >= 100) {
+                    newlyUnlocked.push(idx);
+                }
+            });
+            return newlyUnlocked;
+        }
+
+        // Apply progress increments to state
+        function applyProgress(increments) {
+            SPELL_KEYS.forEach(key => {
+                state.spellProgress[key] = Math.min(100, state.spellProgress[key] + increments[key]);
+            });
+        }
+
+        // Get current progress for a spell by index
+        function getSpellProgress(index) {
+            return state.spellProgress[SPELL_KEYS[index]];
+        }
+
+        // ==================== CARD HANDLERS ====================
+        cards.forEach(card => {
+            card.addEventListener('click', () => handleCardClick(card));
+        });
+
+        async function handleCardClick(card) {
+            if (state.isAnimating || card.classList.contains('disabled') || card.classList.contains('selected')) {
+                return;
+            }
+
+            state.isAnimating = true;
+            state.selectedCard = card;
+
+            const isCorrect = card.dataset.correct === 'true';
+
+            // Disable other cards
+            cards.forEach(c => {
+                if (c !== card) c.classList.add('disabled');
+            });
+
+            card.classList.add('selected');
+
+            if (isCorrect) {
+                await triggerCorrectSequence(card);
+            } else {
+                await triggerWrongSequence(card);
+            }
+        }
+
+        // ==================== CORRECT ANSWER SEQUENCE ====================
+        async function triggerCorrectSequence(card) {
+            // PHASE 1: Card feedback
+            card.classList.add('correct');
+            createConfetti(card, 30);
+            
+            // Calculate new progress for each spell
+            const progressIncrements = calculateProgress(true);
+            const newlyUnlocked = getNewlyUnlockedSpells(progressIncrements);
+            
+            await delay(200);
+
+            // PHASE 2: Circles pop out center stage
+            showCenterStage(true);
+            stageText.textContent = '✓ CORRECT!';
+            stageText.classList.remove('partial');
+            stageText.classList.add('visible');
+
+            await delay(300);
+
+            // Pop circles in with stagger
+            for (let i = 0; i < 3; i++) {
+                await delay(100);
+                centerCircles[i].classList.add('visible');
+            }
+
+            await delay(200);
+
+            // PHASE 3: Stroke filling animation - animate to new progress levels
+            for (let i = 0; i < 3; i++) {
+                await delay(100);
+                const spellKey = SPELL_KEYS[i];
+                const oldProgress = state.spellProgress[spellKey];
+                const newProgress = Math.min(100, oldProgress + progressIncrements[spellKey]);
+                const willComplete = newProgress >= 100 && oldProgress < 100;
+                animateCenterCircleProgress(i, oldProgress, newProgress, willComplete);
+            }
+
+            // Wait for fills to complete
+            await delay(700);
+
+            // PHASE 4: Completion celebration (if any spell unlocked)
+            if (newlyUnlocked.length > 0) {
+                chargedText.textContent = newlyUnlocked.length > 1 ? 'SPELLS CHARGED!' : 'SPELL CHARGED!';
+                chargedText.classList.add('visible');
+                
+                // Pulse completed circles
+                newlyUnlocked.forEach(idx => {
+                    centerCircles[idx].classList.add('complete');
+                });
+                createCelebrationBurst();
+            }
+
+            await delay(400);
+
+            // Apply the progress to state
+            applyProgress(progressIncrements);
+
+            // PHASE 5 & 6: Fly to HUD and dock
+            hideCenterStage();
+            await delay(100);
+
+            await flyCirclesToHUD(progressIncrements, newlyUnlocked);
+
+            // Character celebration (if any spell unlocked)
+            if (newlyUnlocked.length > 0) {
+                triggerCharacterCelebration();
+            }
+
+            // Sequential right HUD glow animation
+            await delay(200);
+            await animateRightHUDSequence(progressIncrements, true);
+
+            // Update right HUD final state
+            updateRightHUDProgress();
+
+            state.isAnimating = false;
+        }
+
+        function showCenterStage(isCorrect) {
+            // Reset circles to show CURRENT progress
+            centerCircles.forEach((c, i) => {
+                c.classList.remove('visible', 'complete', 'filling');
+                c.classList.add('dimmed');
+                
+                // Set to current progress level
+                const currentProgress = getSpellProgress(i);
+                const offset = LARGE_CIRCUMFERENCE * (1 - currentProgress / 100);
+                centerProgress[i].style.strokeDashoffset = offset;
+                centerProgress[i].classList.remove('muted');
+                
+                // If already at 100%, show as complete
+                if (currentProgress >= 100) {
+                    c.classList.remove('dimmed');
+                }
+            });
+            stageText.classList.remove('visible', 'partial');
+            chargedText.classList.remove('visible');
+
+            centerStage.classList.remove('partial');
+            if (!isCorrect) centerStage.classList.add('partial');
+            centerStage.classList.add('visible');
+        }
+
+        function hideCenterStage() {
+            centerStage.classList.remove('visible');
+        }
+
+        // Animate center circle from old progress to new progress
+        function animateCenterCircleProgress(index, oldPercent, newPercent, willComplete, muted = false) {
+            const circle = centerCircles[index];
+            const progress = centerProgress[index];
+            const color = COLORS[index];
+
+            circle.classList.remove('dimmed');
+            circle.classList.add('filling');
+
+            // Set starting position
+            const startOffset = LARGE_CIRCUMFERENCE * (1 - oldPercent / 100);
+            const endOffset = LARGE_CIRCUMFERENCE * (1 - Math.min(100, newPercent) / 100);
+            
+            progress.style.strokeDashoffset = startOffset;
+            
+            // Apply muted class if needed and not completing
+            if (muted && !willComplete) {
+                progress.classList.add('muted');
+            } else {
+                progress.classList.remove('muted');
+            }
+
+            // Animate to new position
+            requestAnimationFrame(() => {
+                progress.style.strokeDashoffset = endOffset;
+            });
+            
+            // Create trailing sparkles during fill (more for bigger gains)
+            const sparkleCount = Math.ceil((newPercent - oldPercent) / 5);
+            if (sparkleCount > 0) {
+                createStrokeSparkles(circle, color, Math.min(sparkleCount, 15));
+            }
+
+            // Completion effects
+            setTimeout(() => {
+                circle.classList.remove('filling');
+                if (willComplete) {
+                    circle.classList.add('complete');
+                    createSparkles(circle, color, 20);
+                }
+            }, state.skipAnimations ? 200 : 600);
+        }
+
+        function createStrokeSparkles(element, color, count) {
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const radius = rect.width / 2;
+
+            const colorMap = {
+                red: ['#FF4444', '#FF8866', '#FFFFFF'],
+                yellow: ['#f59e0b', '#fbbf24', '#FFFFFF'],
+                green: ['#00FF00', '#66FF66', '#FFFFFF']
+            };
+            const colors = colorMap[color] || ['#FFFFFF'];
+
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const angle = (i / count) * Math.PI * 2 - Math.PI / 2;
+                    const x = centerX + Math.cos(angle) * radius;
+                    const y = centerY + Math.sin(angle) * radius;
+
+                    const sparkle = document.createElement('div');
+                    sparkle.className = 'stroke-sparkle';
+                    sparkle.style.left = x + 'px';
+                    sparkle.style.top = y + 'px';
+                    sparkle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                    sparkle.style.boxShadow = `0 0 6px ${colors[0]}`;
+                    sparkle.style.position = 'fixed';
+                    sparkle.style.zIndex = '2000';
+
+                    const tx = (Math.random() - 0.5) * 30;
+                    const ty = (Math.random() - 0.5) * 30;
+                    sparkle.style.setProperty('--tx', `${tx}px`);
+                    sparkle.style.setProperty('--ty', `${ty}px`);
+
+                    document.body.appendChild(sparkle);
+                    setTimeout(() => sparkle.remove(), 400);
+                }, (i / count) * (state.skipAnimations ? 150 : 500));
+            }
+        }
+
+        function createSparkles(element, color, count) {
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            const colorMap = {
+                red: ['#FF4444', '#FF8866', '#FFAA88', '#FFFFFF'],
+                yellow: ['#f59e0b', '#fbbf24', '#fcd34d', '#FFFFFF'],
+                green: ['#00FF00', '#66FF66', '#AAFFAA', '#FFFFFF']
+            };
+            const colors = colorMap[color] || ['#FFFFFF'];
+
+            for (let i = 0; i < count; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle-particle';
+                sparkle.style.left = centerX + 'px';
+                sparkle.style.top = centerY + 'px';
+                sparkle.style.width = (4 + Math.random() * 6) + 'px';
+                sparkle.style.height = sparkle.style.width;
+                sparkle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                sparkle.style.position = 'fixed';
+                sparkle.style.zIndex = '2000';
+
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 40 + Math.random() * 60;
+                sparkle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                sparkle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+
+                document.body.appendChild(sparkle);
+                setTimeout(() => sparkle.remove(), 600);
+            }
+        }
+
+        function createCelebrationBurst() {
+            const container = document.getElementById('center-circles');
+            const rect = container.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            const colors = ['#FF4444', '#00FFFF', '#00FF00', '#FFD700', '#FFFFFF', '#FF69B4'];
+
+            for (let i = 0; i < 40; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle-particle';
+                sparkle.style.left = centerX + (Math.random() - 0.5) * 300 + 'px';
+                sparkle.style.top = centerY + (Math.random() - 0.5) * 100 + 'px';
+                sparkle.style.width = (5 + Math.random() * 8) + 'px';
+                sparkle.style.height = sparkle.style.width;
+                sparkle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                sparkle.style.position = 'fixed';
+                sparkle.style.zIndex = '2000';
+
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 80 + Math.random() * 120;
+                sparkle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                sparkle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+
+                document.body.appendChild(sparkle);
+                setTimeout(() => sparkle.remove(), 800);
+            }
+        }
+
+        // ==================== FLYING TO HUD ====================
+        async function flyCirclesToHUD(progressIncrements, newlyUnlocked) {
+            const promises = [];
+
+            for (let i = 0; i < 3; i++) {
+                await delay(100);
+                const spellKey = SPELL_KEYS[i];
+                const newProgress = state.spellProgress[spellKey]; // Already applied
+                const isUnlocked = newlyUnlocked.includes(i);
+                promises.push(flyCircleToSlot(i, newProgress, isUnlocked));
+            }
+
+            await Promise.all(promises);
+        }
+
+        function flyCircleToSlot(index, newProgress, isNewlyUnlocked) {
+            return new Promise(resolve => {
+                const sourceCircle = centerCircles[index];
+                const targetSlot = slots[index];
+                const color = COLORS[index];
+
+                const sourceRect = sourceCircle.getBoundingClientRect();
+                const targetRect = targetSlot.getBoundingClientRect();
+
+                const startX = sourceRect.left + sourceRect.width / 2;
+                const startY = sourceRect.top + sourceRect.height / 2;
+                const endX = targetRect.left + targetRect.width / 2;
+                const endY = targetRect.top + targetRect.height / 2;
+
+                // Create flying circle
+                const flyingCircle = document.createElement('div');
+                flyingCircle.className = 'flying-circle';
+                flyingCircle.style.width = '150px';
+                flyingCircle.style.height = '150px';
+                flyingCircle.style.left = (startX - 75) + 'px';
+                flyingCircle.style.top = (startY - 75) + 'px';
+
+                const colorHex = { red: '#FF4444', yellow: '#f59e0b', green: '#00FF00' };
+                const colorHexMuted = { red: '#FF7F7F', yellow: '#fcd34d', green: '#90EE90' };
+                const isFull = newProgress >= 100;
+                const strokeColor = isFull ? colorHex[color] : colorHexMuted[color];
+                const glowFilter = isFull ? `drop-shadow(0 0 12px ${colorHex[color]})` : 'drop-shadow(0 0 4px ${colorHexMuted[color]})';
+                const progressOffset = LARGE_CIRCUMFERENCE * (1 - newProgress / 100);
+                const imgFilter = isFull ? 'none' : 'grayscale(0.3) brightness(0.8)';
+
+                flyingCircle.innerHTML = `
+                    <svg viewBox="0 0 160 160" style="position: absolute; width: 100%; height: 100%; transform: rotate(-90deg); z-index: 2;">
+                        <circle cx="80" cy="80" r="75" fill="none" stroke="${strokeColor}" stroke-width="8" 
+                                stroke-linecap="round" style="filter: ${glowFilter}; stroke-dasharray: ${LARGE_CIRCUMFERENCE}; stroke-dashoffset: ${progressOffset};"/>
+                    </svg>
+                    <img src="${SPELL_CIRCLES[index]}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px; border-radius: 50%; z-index: 1; filter: ${imgFilter};">
+                `;
+
+                document.body.appendChild(flyingCircle);
+
+                // Bezier curve control point
+                const midX = (startX + endX) / 2 + (index === 0 ? -50 : index === 2 ? 50 : 0);
+                const midY = Math.min(startY, endY) - 80 + (index === 2 ? 40 : 0);
+
+                const duration = state.skipAnimations ? 200 : 600;
+                const startTime = performance.now();
+
+                // Particle trail - more vibrant for unlocked spells
+                let trailInterval;
+                if (!state.skipAnimations) {
+                    trailInterval = setInterval(() => {
+                        createTrailParticle(flyingCircle, isNewlyUnlocked ? color : (isFull ? color : 'gray'));
+                    }, 30);
+                }
+
+                function animate(currentTime) {
+                    const elapsed = currentTime - startTime;
+                    const animProgress = Math.min(elapsed / duration, 1);
+                    const eased = easeInOutCubic(animProgress);
+
+                    const x = quadraticBezier(startX, midX, endX, eased);
+                    const y = quadraticBezier(startY, midY, endY, eased);
+                    const scale = 1 - animProgress * 0.6; // 150px -> 60px
+                    const rotation = animProgress * 180;
+
+                    flyingCircle.style.left = (x - 75 * scale) + 'px';
+                    flyingCircle.style.top = (y - 75 * scale) + 'px';
+                    flyingCircle.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
+                    flyingCircle.style.opacity = 1 - animProgress * 0.2;
+
+                    if (animProgress < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        if (trailInterval) clearInterval(trailInterval);
+                        flyingCircle.remove();
+
+                        // Dock in slot with current progress
+                        dockInSlot(index, newProgress, isNewlyUnlocked);
+                        resolve();
+                    }
+                }
+
+                requestAnimationFrame(animate);
+            });
+        }
+
+        function createTrailParticle(parent, color) {
+            const rect = parent.getBoundingClientRect();
+            const trail = document.createElement('div');
+            trail.className = `flying-trail ${color}`;
+            trail.style.left = (rect.left + rect.width / 2) + 'px';
+            trail.style.top = (rect.top + rect.height / 2) + 'px';
+            document.body.appendChild(trail);
+
+            trail.animate([
+                { opacity: 1, transform: 'scale(1)' },
+                { opacity: 0, transform: 'scale(0)' }
+            ], {
+                duration: 300,
+                easing: 'ease-out'
+            }).onfinish = () => trail.remove();
+        }
+
+        function quadraticBezier(p0, p1, p2, t) {
+            return (1 - t) * (1 - t) * p0 + 2 * (1 - t) * t * p1 + t * t * p2;
+        }
+
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function dockInSlot(index, newProgress, isNewlyUnlocked) {
+            const slot = slots[index];
+            const progressRing = slotProgress[index];
+            const color = COLORS[index];
+
+            // Update HUD progress ring
+            const offset = HUD_CIRCUMFERENCE * (1 - newProgress / 100);
+            progressRing.style.strokeDashoffset = offset;
+
+            // Update slot state
+            if (newProgress >= 100) {
+                slot.classList.remove('empty', 'partial');
+                slot.classList.add('unlocked');
+            } else if (newProgress > 0) {
+                slot.classList.remove('empty', 'unlocked');
+                slot.classList.add('partial');
+            }
+
+            // Dock animation
+            slot.classList.add('dock-pulse');
+            setTimeout(() => slot.classList.remove('dock-pulse'), 400);
+
+            // Sparkles on dock (if newly unlocked)
+            if (isNewlyUnlocked) {
+                const rect = slot.getBoundingClientRect();
+                const sparkleColors = {
+                    red: '#FF4444',
+                    yellow: '#f59e0b',
+                    green: '#00FF00'
+                };
+                for (let i = 0; i < 12; i++) {
+                    const sparkle = document.createElement('div');
+                    sparkle.className = 'sparkle-particle';
+                    sparkle.style.left = (rect.left + rect.width / 2) + 'px';
+                    sparkle.style.top = (rect.top + rect.height / 2) + 'px';
+                    sparkle.style.width = '6px';
+                    sparkle.style.height = '6px';
+                    sparkle.style.background = sparkleColors[color] || '#FFFFFF';
+                    sparkle.style.position = 'fixed';
+                    sparkle.style.zIndex = '2000';
+
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = 25 + Math.random() * 35;
+                    sparkle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                    sparkle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+
+                    document.body.appendChild(sparkle);
+                    setTimeout(() => sparkle.remove(), 600);
+                }
+            }
+        }
+
+        function triggerCharacterCelebration() {
+            avatarContainer.classList.add('celebrating');
+            setTimeout(() => avatarContainer.classList.remove('celebrating'), 600);
+
+            const emotes = ['✨', '🌟', '💫', '⭐', '🎉'];
+            emoteBubble.textContent = emotes[Math.floor(Math.random() * emotes.length)];
+            emoteBubble.classList.add('animate');
+            setTimeout(() => emoteBubble.classList.remove('animate'), 800);
+
+            // Update score
+            state.score++;
+            scoreBadge.textContent = state.score;
+            scoreBadge.style.transform = 'scale(1.3)';
+            setTimeout(() => scoreBadge.style.transform = 'scale(1)', 200);
+        }
+
+        // ==================== SEQUENTIAL RIGHT HUD ANIMATION ====================
+        async function animateRightHUDSequence(progressIncrements, isBright) {
+            const spellOrder = ['magicMissile', 'scatterShot', 'rapidFire'];
+            const spellColors = {
+                magicMissile: '#00BFFF',
+                scatterShot: '#00FF00',
+                rapidFire: '#FF4444'
+            };
+
+            for (let i = 0; i < spellOrder.length; i++) {
+                const spellName = spellOrder[i];
+                await delay(100); // Stagger between circles
+                animateSpellCircle(spellName, progressIncrements[spellName], isBright, spellColors[spellName]);
+            }
+        }
+
+        function animateSpellCircle(spellName, increment, isBright, color) {
+            const slot = spellSlots[spellName];
+            const stroke = spellStrokes[spellName];
+            const progressText = progressTexts[spellName];
+            const circleBg = slot.querySelector('.spell-circle-bg');
+            const wandIcon = slot.querySelector('.wand-icon');
+
+            // Current and new progress
+            const currentProgress = state.spellProgress[spellName];
+            const newProgress = Math.min(currentProgress + increment, 100);
+
+            // Apply glow class
+            const glowClass = isBright ? 'glowing-bright' : 'glowing-dim';
+            slot.classList.add(glowClass);
+
+            // Brighten background
+            circleBg.style.filter = isBright ? 'brightness(1.3)' : 'brightness(1.15)';
+
+            // Update stroke
+            const oldOffset = SPELL_CIRCUMFERENCE * (1 - currentProgress / 100);
+            const newOffset = SPELL_CIRCUMFERENCE * (1 - newProgress / 100);
+            stroke.style.strokeDashoffset = newOffset;
+
+            // Remove muted class if bright
+            if (isBright) {
+                stroke.classList.remove('muted');
+            } else {
+                stroke.classList.add('muted');
+            }
+
+            // Show progress text
+            progressText.textContent = `+${increment}%`;
+            progressText.style.opacity = '1';
+            progressText.style.color = isBright ? color : '#999';
+
+            // Create particles
+            const particleCount = isBright ? 12 : 6;
+            createHUDParticleBurst(slot, color, particleCount, !isBright);
+
+            // Cleanup after animation
+            const cleanupDelay = isBright ? 400 : 300;
+            setTimeout(() => {
+                slot.classList.remove(glowClass);
+                circleBg.style.filter = '';
+                progressText.style.opacity = '0';
+
+                // Update slot state
+                if (newProgress >= 100) {
+                    unlockSpellCircle(slot, spellName, color);
+                } else if (newProgress > 0) {
+                    slot.classList.remove('empty', 'unlocked');
+                    slot.classList.add('partial');
+                }
+            }, cleanupDelay);
+        }
+
+        function unlockSpellCircle(slot, spellName, color) {
+            slot.classList.remove('empty', 'partial');
+            slot.classList.add('unlocked');
+
+            // Large celebration
+            const container = slot.querySelector('.spell-circle-container');
+            container.style.animation = 'glow-pulse-bright 0.6s ease-out';
+            container.style.transform = 'scale(1.3)';
+
+            setTimeout(() => {
+                container.style.transform = '';
+                container.style.animation = '';
+            }, 600);
+
+            // Big particle burst
+            createHUDParticleBurst(slot, color, 25, false);
+
+            // Show unlocked text
+            const unlockText = document.createElement('div');
+            unlockText.textContent = 'UNLOCKED!';
+            unlockText.style.cssText = `
+                position: absolute;
+                top: -35px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 12px;
+                font-weight: bold;
+                color: ${color};
+                text-shadow: 0 0 8px ${color};
+                animation: float-up-fade 1s ease-out forwards;
+                white-space: nowrap;
+                z-index: 200;
+            `;
+            slot.appendChild(unlockText);
+            setTimeout(() => unlockText.remove(), 1000);
+        }
+
+        function createHUDParticleBurst(element, color, count, isMuted) {
+            const container = element.querySelector('.spell-circle-container');
+            const rect = container.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'spell-particle';
+
+                const particleColor = isMuted ? '#999' : color;
+                particle.style.background = particleColor;
+                particle.style.boxShadow = isMuted ? 'none' : `0 0 4px ${color}`;
+                particle.style.position = 'fixed';
+                particle.style.zIndex = '200';
+
+                const angle = (Math.random() * 360) * Math.PI / 180;
+                const distance = 20 + Math.random() * 30;
+
+                particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+
+                particle.style.left = centerX + 'px';
+                particle.style.top = centerY + 'px';
+
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), 500);
+            }
+        }
+
+        // Update right HUD progress after animation
+        function updateRightHUDProgress() {
+            const spellOrder = ['magicMissile', 'scatterShot', 'rapidFire'];
+            
+            spellOrder.forEach(spellName => {
+                const progress = state.spellProgress[spellName];
+                const slot = spellSlots[spellName];
+                const stroke = spellStrokes[spellName];
+
+                const offset = SPELL_CIRCUMFERENCE * (1 - progress / 100);
+                stroke.style.strokeDashoffset = offset;
+
+                slot.classList.remove('empty', 'partial', 'unlocked');
+                if (progress >= 100) {
+                    slot.classList.add('unlocked');
+                } else if (progress > 0) {
+                    slot.classList.add('partial');
+                } else {
+                    slot.classList.add('empty');
+                }
+            });
+        }
+
+        // ==================== WRONG ANSWER SEQUENCE ====================
+        async function triggerWrongSequence(card) {
+            // PHASE 1: Card feedback
+            card.classList.add('wrong');
+
+            // Calculate new progress for each spell (wrong answer increments)
+            const progressIncrements = calculateProgress(false);
+            const newlyUnlocked = getNewlyUnlockedSpells(progressIncrements);
+
+            await delay(200);
+
+            // PHASE 2: Circles pop out (muted style but still shows progress)
+            showCenterStage(false);
+            stageText.textContent = newlyUnlocked.length > 0 ? 'Progress!' : 'Try Again!';
+            stageText.classList.add('partial', 'visible');
+
+            await delay(200);
+
+            // All circles appear at once
+            centerCircles.forEach(c => c.classList.add('visible'));
+
+            await delay(200);
+
+            // PHASE 3: Animate to new progress levels (muted colors for non-complete)
+            for (let i = 0; i < 3; i++) {
+                const spellKey = SPELL_KEYS[i];
+                const oldProgress = state.spellProgress[spellKey];
+                const newProgress = Math.min(100, oldProgress + progressIncrements[spellKey]);
+                const willComplete = newProgress >= 100 && oldProgress < 100;
+                animateCenterCircleProgress(i, oldProgress, newProgress, willComplete, true); // muted=true
+            }
+
+            await delay(600);
+
+            // If any spell unlocked, show celebration
+            if (newlyUnlocked.length > 0) {
+                chargedText.textContent = 'SPELL CHARGED!';
+                chargedText.classList.add('visible');
+                newlyUnlocked.forEach(idx => {
+                    centerCircles[idx].classList.add('complete');
+                });
+                await delay(300);
+            }
+
+            // Apply the progress to state
+            applyProgress(progressIncrements);
+
+            // PHASE 4: Fly to HUD
+            hideCenterStage();
+            await delay(100);
+
+            await flyCirclesToHUD(progressIncrements, newlyUnlocked);
+
+            // Character celebration if spell unlocked
+            if (newlyUnlocked.length > 0) {
+                triggerCharacterCelebration();
+            }
+
+            // Sequential right HUD glow animation (dim for wrong answers)
+            await delay(200);
+            await animateRightHUDSequence(progressIncrements, false);
+
+            // Update right HUD final state
+            updateRightHUDProgress();
+
+            // Reset cards
+            cards.forEach(c => c.classList.remove('selected', 'wrong', 'disabled'));
+
+            state.isAnimating = false;
+            state.selectedCard = null;
+        }
+
+        // ==================== CONFETTI ====================
+        function createConfetti(sourceElement, count) {
+            const rect = sourceElement.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const colors = ['#FFD700', '#FFFFFF', '#9B59B6', '#00CED1', '#FF69B4', '#00FF88'];
+
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.position = 'fixed';
+                confetti.style.width = (6 + Math.random() * 10) + 'px';
+                confetti.style.height = confetti.style.width;
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = centerX + 'px';
+                confetti.style.top = centerY + 'px';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                confetti.style.pointerEvents = 'none';
+                confetti.style.zIndex = '500';
+
+                confettiContainer.appendChild(confetti);
+
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = 150 + Math.random() * 200;
+                const tx = Math.cos(angle) * velocity;
+                const ty = Math.sin(angle) * velocity - 150;
+                const rotation = Math.random() * 720 - 360;
+
+                confetti.animate([
+                    { opacity: 1, transform: 'translate(0, 0) rotate(0deg) scale(1)' },
+                    { opacity: 0, transform: `translate(${tx}px, ${ty}px) rotate(${rotation}deg) scale(0.2)` }
+                ], {
+                    duration: 600 + Math.random() * 400,
+                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                    fill: 'forwards'
+                }).onfinish = () => confetti.remove();
+            }
+        }
+
+        // ==================== DEMO FUNCTIONS ====================
+        function demoCorrect() {
+            if (state.isAnimating) return;
+            resetGame();
+            setTimeout(() => {
+                const correctCard = document.querySelector('[data-correct="true"]');
+                handleCardClick(correctCard);
+            }, 100);
+        }
+
+        function demoWrong() {
+            if (state.isAnimating) return;
+            resetGame();
+            setTimeout(() => {
+                const wrongCard = document.querySelector('[data-correct="false"]');
+                handleCardClick(wrongCard);
+            }, 100);
+        }
+
+        function resetGame() {
+            state.isAnimating = false;
+            state.selectedCard = null;
+            state.spellProgress = {
+                rapidFire: 0,
+                magicMissile: 0,
+                scatterShot: 0
+            };
+            state.score = 0;
+            state.stuns = 1;
+
+            // Reset center stage
+            centerStage.classList.remove('visible', 'partial');
+            centerCircles.forEach((c, i) => {
+                c.classList.remove('visible', 'complete', 'filling');
+                c.classList.add('dimmed');
+                centerProgress[i].style.strokeDashoffset = LARGE_CIRCUMFERENCE;
+                centerProgress[i].classList.remove('muted');
+            });
+            stageText.classList.remove('visible');
+            chargedText.classList.remove('visible');
+
+            // Reset cards
+            cards.forEach(card => {
+                card.classList.remove('selected', 'correct', 'wrong', 'disabled');
+            });
+
+            // Reset HUD slots (top bar)
+            slots.forEach((slot, i) => {
+                slot.classList.remove('partial', 'unlocked', 'dock-pulse');
+                slot.classList.add('empty');
+                slotProgress[i].style.strokeDashoffset = HUD_CIRCUMFERENCE;
+            });
+
+            // Reset right side spell HUD
+            const spellOrder = ['magicMissile', 'scatterShot', 'rapidFire'];
+            spellOrder.forEach(spellName => {
+                const slot = spellSlots[spellName];
+                const stroke = spellStrokes[spellName];
+                const progressText = progressTexts[spellName];
+                
+                slot.classList.remove('partial', 'unlocked', 'glowing-bright', 'glowing-dim', 'dock-pulse');
+                slot.classList.add('empty');
+                stroke.style.strokeDashoffset = SPELL_CIRCUMFERENCE;
+                stroke.classList.remove('muted');
+                progressText.style.opacity = '0';
+                
+                const circleBg = slot.querySelector('.spell-circle-bg');
+                if (circleBg) circleBg.style.filter = '';
+            });
+
+            // Reset score badge
+            scoreBadge.textContent = '0';
+
+            // Reset stuns
+            stunsCount.textContent = '1';
+
+            // Clear particles
+            confettiContainer.innerHTML = '';
+            document.querySelectorAll('.flying-circle, .flying-trail, .sparkle-particle, .stroke-sparkle').forEach(el => el.remove());
+
+            // Reset avatar
+            avatarContainer.classList.remove('celebrating');
+            emoteBubble.classList.remove('animate');
+        }
+
+        async function autoDemo() {
+            if (state.isAnimating) return;
+            resetGame();
+
+            await delay(500);
+            
+            // Wrong answer
+            const wrongCards = document.querySelectorAll('[data-correct="false"]');
+            await handleCardClick(wrongCards[0]);
+            
+            await delay(500);
+            
+            // Another wrong
+            await handleCardClick(wrongCards[1]);
+            
+            await delay(500);
+            
+            // Correct answer
+            const correctCard = document.querySelector('[data-correct="true"]');
+            await handleCardClick(correctCard);
+        }
+
+        // ==================== TOGGLE ====================
+        document.getElementById('skip-toggle').addEventListener('change', (e) => {
+            state.skipAnimations = e.target.checked;
+        });
+
+        // ==================== KEYBOARD ====================
+        document.addEventListener('keydown', (e) => {
+            if (centerStage.classList.contains('visible')) return;
+            
+            if (e.key === '1') handleCardClick(cards[0]);
+            if (e.key === '2') handleCardClick(cards[1]);
+            if (e.key === '3') handleCardClick(cards[2]);
+            if (e.key === '4') handleCardClick(cards[3]);
+            if (e.key === 'r' || e.key === 'R') resetGame();
+        });
+
+        // ==================== INIT ====================
+        console.log('🎮 Wayarena Spell Game Loaded!');
+        console.log('Keys: 1-4 select cards, R resets');
+    </script>
+</body>
+</html>

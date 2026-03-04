@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayarena - Spell Animations</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --card-blue: #1E90FF;
+            --card-cyan: #00CED1;
+            --success-gold: #FFD700;
+            --bounce-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        body {
+            min-height: 100vh;
+            background: url('BG.png') center center;
+            background-size: cover;
+            font-family: 'Fredoka', system-ui, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .logo {
+            height: 80px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+        }
+
+        .title {
+            font-size: 48px;
+            font-weight: 800;
+            color: white;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3);
+            margin-bottom: 16px;
+        }
+
+        .subtitle {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 50px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .cards-container {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            width: 400px;
+            background: rgba(25, 25, 40, 0.95);
+            border-radius: 24px;
+            padding: 30px;
+            text-decoration: none;
+            border: 3px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s var(--bounce-ease);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.1),
+                transparent
+            );
+            transition: left 0.5s ease;
+        }
+
+        .card:hover::before {
+            left: 100%;
+        }
+
+        .card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: var(--success-gold);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(255, 215, 0, 0.2);
+        }
+
+        .card:active {
+            transform: translateY(-5px) scale(0.98);
+        }
+
+        .card-preview {
+            width: 100%;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-preview img {
+            max-width: 90%;
+            max-height: 80%;
+            object-fit: contain;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 12px;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-description {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .card-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card.old .card-badge {
+            background: linear-gradient(135deg, #9B59B6, #8E44AD);
+            color: white;
+        }
+
+        .card.new .card-badge {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+        }
+
+        .card.old:hover .card-title {
+            color: #BB8FCE;
+        }
+
+        .card.new:hover .card-title {
+            color: #58D68D;
+        }
+
+        .footer {
+            margin-top: 60px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            color: var(--success-gold);
+        }
+
+        @media (max-width: 860px) {
+            .cards-container {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .card {
+                width: 100%;
+                max-width: 400px;
+            }
+
+            .title {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="wayarena thumbnail.png" alt="Wayarena" class="logo">
+        <h1 class="title">Spell Animations</h1>
+        <p class="subtitle">Choose an animation demo to explore</p>
+
+        <div class="cards-container">
+            <a href="spell-hud-simple.html" class="card old">
+                <div class="card-preview">
+                    <img src="HUD2.png" alt="Old HUD Preview">
+                </div>
+                <h2 class="card-title">Old HUD Spell Animation</h2>
+                <p class="card-description">
+                    Circular spell slots with individual progress rings. Flying rewards animate to each spell circle on correct answers.
+                </p>
+                <span class="card-badge">Circular Spells</span>
+            </a>
+
+            <a href="spell-hud-new.html" class="card new">
+                <div class="card-preview">
+                    <img src="Spell nav-new.png" alt="New HUD Preview">
+                </div>
+                <h2 class="card-title">New HUD Spell Animation</h2>
+                <p class="card-description">
+                    Bar-based spell progress with icon glows. Combined progress bar fills as spells charge up.
+                </p>
+                <span class="card-badge">Bar Progress</span>
+            </a>
+        </div>
+
+        <div class="footer">
+            <p>Press <strong>C</strong> for correct, <strong>W</strong> for wrong, <strong>R</strong> to reset</p>
+        </div>
+    </div>
+</body>
+</html>

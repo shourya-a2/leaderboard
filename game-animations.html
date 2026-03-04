@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayarena - Quiz Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Health & Mana Colors */
+            --health-pink: #FF69B4;
+            --health-glow: #FFB6C1;
+            --mana-blue: #00BFFF;
+            --mana-glow: #87CEEB;
+            
+            /* Success Colors */
+            --success-gold: #FFD700;
+            --success-glow: #FFFF00;
+            --checkmark-green: #00FF00;
+            
+            /* Wrong Feedback */
+            --wrong-gray: #999999;
+            
+            /* Card Colors */
+            --card-blue: #1E90FF;
+            --card-blue-dark: #1565C0;
+            --card-cyan: #00CED1;
+            --card-cyan-dark: #00838F;
+            --card-orange: #FFA500;
+            --card-orange-dark: #E65100;
+            --card-pink: #FF69B4;
+            --card-pink-dark: #C2185B;
+            
+            /* Modal */
+            --modal-purple: #2E1A47;
+            --modal-blue: #1A237E;
+            
+            /* Timing */
+            --bounce-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --smooth-ease: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            min-height: 100vh;
+            background: url('BG.png') center center;
+            background-size: cover;
+            font-family: 'Fredoka', system-ui, sans-serif;
+            overflow: hidden;
+        }
+
+        .game-container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* ==================== HUD - UNCHANGED FROM ORIGINAL ==================== */
+        .hud-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 8px 12px;
+            background: linear-gradient(to bottom, #e8e0d4, #d4ccc0);
+            border-bottom: 3px solid #4a7bb5;
+            position: relative;
+            z-index: 100;
+        }
+
+        .left-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .wayarena-logo {
+            height: 50px;
+            width: auto;
+        }
+
+        .health-bar-avatar {
+            height: 45px;
+            width: auto;
+            transition: transform 0.3s var(--bounce-ease), filter 0.3s ease;
+        }
+
+        .health-bar-avatar.celebrating {
+            animation: avatarCelebrate 0.6s var(--bounce-ease);
+        }
+
+        @keyframes avatarCelebrate {
+            0% { transform: scale(1) translateY(0); }
+            25% { transform: scale(1.1) translateY(-8px); }
+            50% { transform: scale(1.1) translateY(-4px); }
+            75% { transform: scale(1.05) translateY(-6px); }
+            100% { transform: scale(1) translateY(0); }
+        }
+
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spell-nav {
+            height: 30px;
+            width: auto;
+        }
+
+        .stun-score {
+            height: 26px;
+            width: auto;
+        }
+
+        /* HUD pulse effect when rewards arrive */
+        .hud-pulse-target {
+            position: relative;
+        }
+
+        .hud-pulse-target::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .hud-pulse-target.pulse-health::after {
+            animation: hudPulse 0.5s ease-out;
+            box-shadow: 0 0 30px var(--health-pink), 0 0 60px var(--health-glow);
+        }
+
+        .hud-pulse-target.pulse-mana::after {
+            animation: hudPulse 0.5s ease-out;
+            box-shadow: 0 0 30px var(--mana-blue), 0 0 60px var(--mana-glow);
+        }
+
+        @keyframes hudPulse {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.4); }
+        }
+
+        /* Floating +HP/+Spell text near HUD */
+        .hud-floating-text {
+            position: absolute;
+            font-size: 18px;
+            font-weight: 700;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 200;
+            white-space: nowrap;
+        }
+
+        .hud-floating-text.health {
+            color: var(--health-pink);
+            text-shadow: 0 0 10px white, 0 0 20px var(--health-pink);
+        }
+
+        .hud-floating-text.mana {
+            color: var(--mana-blue);
+            text-shadow: 0 0 10px white, 0 0 20px var(--mana-blue);
+        }
+
+        .hud-floating-text.animate {
+            animation: hudFloatUp 1s ease-out forwards;
+        }
+
+        @keyframes hudFloatUp {
+            0% { opacity: 0; transform: translateY(0) scale(0.5); }
+            20% { opacity: 1; transform: translateY(-5px) scale(1.2); }
+            100% { opacity: 0; transform: translateY(-30px) scale(1); }
+        }
+
+        /* ==================== MAIN CONTENT ==================== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* ==================== QUESTION BOX ==================== */
+        .question-box {
+            background: rgba(25, 25, 35, 0.95);
+            border-radius: 20px;
+            padding: 28px 48px;
+            max-width: 750px;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .question-text {
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .question-timer {
+            position: absolute;
+            bottom: -18px;
+            right: 24px;
+            background: rgba(45, 45, 55, 0.98);
+            color: #ffffff;
+            padding: 8px 18px;
+            border-radius: 24px;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* ==================== ANSWER CARDS ==================== */
+        .answers-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            width: 100%;
+            max-width: 1400px;
+            padding: 0 24px;
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .answer-card {
+            height: 220px;
+            border-radius: 16px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 40px;
+            position: relative;
+            cursor: pointer;
+            border: 4px solid rgba(0, 0, 0, 0.2);
+            overflow: visible;
+            /* Subtle idle floating */
+            animation: cardFloat 3s ease-in-out infinite;
+            transition: transform 0.15s ease-out, 
+                        box-shadow 0.15s ease-out, 
+                        opacity 0.3s ease, 
+                        filter 0.3s ease,
+                        border-color 0.2s ease;
+            will-change: transform, opacity;
+        }
+
+        @keyframes cardFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        /* Stagger floating */
+        .answer-card:nth-child(1) { animation-delay: 0s; }
+        .answer-card:nth-child(2) { animation-delay: 0.2s; }
+        .answer-card:nth-child(3) { animation-delay: 0.4s; }
+        .answer-card:nth-child(4) { animation-delay: 0.6s; }
+
+        /* Card Colors */
+        .answer-card.blue {
+            background: linear-gradient(to bottom, var(--card-blue), var(--card-blue-dark));
+        }
+        .answer-card.cyan {
+            background: linear-gradient(to bottom, var(--card-cyan), var(--card-cyan-dark));
+        }
+        .answer-card.orange {
+            background: linear-gradient(to bottom, var(--card-orange), var(--card-orange-dark));
+        }
+        .answer-card.pink {
+            background: linear-gradient(to bottom, var(--card-pink), var(--card-pink-dark));
+        }
+
+        /* HOVER STATE */
+        .answer-card:hover:not(.disabled):not(.selected) {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255,255,255,0.15);
+            filter: brightness(1.1);
+            animation: none;
+        }
+
+        /* PRESSING STATE */
+        .answer-card:active:not(.disabled):not(.selected) {
+            transform: scale(0.97) rotate(2deg);
+            filter: brightness(0.95);
+            transition: transform 0.08s ease-in;
+        }
+
+        /* DISABLED STATE */
+        .answer-card.disabled {
+            opacity: 0.3;
+            filter: grayscale(0.5);
+            transform: scale(0.95);
+            cursor: not-allowed;
+            animation: none;
+            pointer-events: none;
+        }
+
+        /* SELECTED STATES */
+        .answer-card.selected {
+            animation: none;
+            z-index: 10;
+        }
+
+        .answer-card.selected.correct {
+            transform: scale(1.15);
+            border: 4px solid var(--success-gold);
+            box-shadow: 0 0 40px var(--success-gold), 0 0 80px rgba(255, 215, 0, 0.4);
+            animation: correctGlow 0.8s ease-out infinite alternate;
+        }
+
+        @keyframes correctGlow {
+            0% { box-shadow: 0 0 30px var(--success-gold), 0 0 60px rgba(255, 215, 0, 0.3); }
+            100% { box-shadow: 0 0 50px var(--success-gold), 0 0 100px rgba(255, 215, 0, 0.5); }
+        }
+
+        .answer-card.selected.wrong {
+            animation: wrongShake 0.3s linear;
+        }
+
+        @keyframes wrongShake {
+            0% { transform: translateX(0); opacity: 1; }
+            20% { transform: translateX(-8px); opacity: 0.7; }
+            40% { transform: translateX(8px); opacity: 0.7; }
+            60% { transform: translateX(-6px); opacity: 0.8; }
+            80% { transform: translateX(6px); opacity: 0.9; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Card Flash Overlay */
+        .card-flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            border-radius: 12px;
+        }
+
+        .answer-card.selected.correct .card-flash {
+            animation: flashBright 0.2s ease-out;
+        }
+
+        @keyframes flashBright {
+            0% { opacity: 0; }
+            40% { opacity: 0.9; }
+            100% { opacity: 0; }
+        }
+
+        /* Checkmark */
+        .card-checkmark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 90px;
+            color: var(--checkmark-green);
+            text-shadow: 0 0 30px var(--checkmark-green), 0 0 60px rgba(0, 255, 0, 0.5);
+            pointer-events: none;
+            opacity: 0;
+            z-index: 5;
+        }
+
+        .answer-card.selected.correct .card-checkmark {
+            animation: checkmarkPop 0.4s var(--bounce-ease) forwards;
+        }
+
+        @keyframes checkmarkPop {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0) rotate(-20deg); }
+            60% { opacity: 1; transform: translate(-50%, -50%) scale(1.2) rotate(5deg); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1) rotate(0deg); }
+        }
+
+        /* X Mark (subtle gray) */
+        .card-xmark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 60px;
+            color: var(--wrong-gray);
+            pointer-events: none;
+            opacity: 0;
+            z-index: 5;
+        }
+
+        .answer-card.selected.wrong .card-xmark {
+            animation: xmarkFade 0.4s ease-out forwards;
+        }
+
+        @keyframes xmarkFade {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            25% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+            75% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        }
+
+        /* Try Again hint text */
+        .try-again-hint {
+            position: absolute;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            font-weight: 600;
+            color: #a0a0a0;
+            opacity: 0;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .answer-card.selected.wrong .try-again-hint {
+            animation: hintFade 0.6s ease-out forwards;
+        }
+
+        @keyframes hintFade {
+            0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+            30% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            70% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+        }
+
+        .answer-text {
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 700;
+            text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+            position: relative;
+            z-index: 2;
+        }
+
+        .answer-badge {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            background: rgba(0, 0, 0, 0.35);
+            color: #ffffff;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            z-index: 2;
+        }
+
+        /* ==================== CONFETTI CONTAINER ==================== */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 500;
+            overflow: hidden;
+        }
+
+        .confetti {
+            position: absolute;
+            pointer-events: none;
+        }
+
+        /* ==================== REWARD MODAL ==================== */
+        .reward-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .reward-modal.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .reward-modal-backdrop {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .reward-modal-content {
+            position: relative;
+            width: 420px;
+            background: linear-gradient(135deg, var(--modal-purple), var(--modal-blue));
+            border-radius: 24px;
+            padding: 32px 40px;
+            text-align: center;
+            border: 5px solid var(--success-gold);
+            box-shadow: 0 0 60px rgba(255, 215, 0, 0.4), 0 20px 60px rgba(0, 0, 0, 0.5);
+            transform: scale(0.8);
+            opacity: 0;
+            transition: transform 0.3s var(--bounce-ease), opacity 0.3s ease;
+            overflow: hidden;
+        }
+
+        .reward-modal.visible .reward-modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .reward-modal.exiting .reward-modal-content {
+            transform: scale(0.8);
+            opacity: 0;
+        }
+
+        /* Golden shimmer effect */
+        .reward-modal-content::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 40%,
+                rgba(255, 215, 0, 0.1) 45%,
+                rgba(255, 215, 0, 0.2) 50%,
+                rgba(255, 215, 0, 0.1) 55%,
+                transparent 60%
+            );
+            animation: shimmer 2s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        /* Correct Text */
+        .correct-title {
+            font-size: 48px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 24px;
+            text-shadow: 0 0 20px var(--checkmark-green), 0 4px 8px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        .reward-modal.visible .correct-title {
+            animation: titleBounce 0.4s var(--bounce-ease) forwards;
+            animation-delay: 0.1s;
+        }
+
+        @keyframes titleBounce {
+            0% { opacity: 0; transform: translateY(-20px) scale(0.8); }
+            60% { opacity: 1; transform: translateY(5px) scale(1.05); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Rewards Container */
+        .rewards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .reward-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 16px 20px;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .reward-modal.visible .reward-item.health-reward {
+            animation: rewardSlideUp 0.4s var(--bounce-ease) forwards;
+            animation-delay: 0.3s;
+        }
+
+        .reward-modal.visible .reward-item.mana-reward {
+            animation: rewardSlideUp 0.4s var(--bounce-ease) forwards;
+            animation-delay: 0.5s;
+        }
+
+        @keyframes rewardSlideUp {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .reward-icon {
+            font-size: 48px;
+            animation: iconPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .reward-details {
+            flex: 1;
+            text-align: left;
+        }
+
+        .reward-text {
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 8px;
+        }
+
+        .reward-text.health { text-shadow: 0 0 15px var(--health-pink); }
+        .reward-text.mana { text-shadow: 0 0 15px var(--mana-blue); }
+
+        /* Mini bars inside modal */
+        .mini-bar-container {
+            width: 100%;
+            height: 12px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .mini-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            width: 0%;
+            transition: width 0.6s var(--bounce-ease);
+            position: relative;
+        }
+
+        .mini-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 1px;
+            left: 4px;
+            right: 4px;
+            height: 4px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.5), transparent);
+            border-radius: 2px;
+        }
+
+        .mini-bar-fill.health {
+            background: linear-gradient(to right, var(--health-pink), #FF1493);
+            box-shadow: 0 0 10px var(--health-glow);
+        }
+
+        .mini-bar-fill.mana {
+            background: linear-gradient(to right, var(--mana-blue), #00CED1);
+            box-shadow: 0 0 10px var(--mana-glow);
+        }
+
+        .mini-bar-value {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        /* Dismiss hint */
+        .dismiss-hint {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+            opacity: 0;
+        }
+
+        .reward-modal.visible .dismiss-hint {
+            animation: hintAppear 0.3s ease forwards;
+            animation-delay: 0.8s;
+        }
+
+        @keyframes hintAppear {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        /* ==================== FLYING REWARDS ==================== */
+        .flying-reward {
+            position: fixed;
+            pointer-events: none;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+
+        .flying-reward .icon {
+            font-size: 36px;
+        }
+
+        .flying-reward.health {
+            filter: drop-shadow(0 0 15px var(--health-pink));
+        }
+
+        .flying-reward.mana {
+            filter: drop-shadow(0 0 15px var(--mana-blue));
+        }
+
+        .flying-trail {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .flying-trail.health {
+            background: radial-gradient(circle, white, var(--health-pink));
+            box-shadow: 0 0 10px var(--health-pink);
+        }
+
+        .flying-trail.mana {
+            background: radial-gradient(circle, white, var(--mana-blue));
+            box-shadow: 0 0 10px var(--mana-blue);
+        }
+
+        /* ==================== EMOTE BUBBLE ==================== */
+        .emote-bubble {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            font-size: 28px;
+            background: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            pointer-events: none;
+            z-index: 150;
+        }
+
+        .emote-bubble.animate {
+            animation: emotePop 0.8s var(--bounce-ease) forwards;
+        }
+
+        @keyframes emotePop {
+            0% { transform: translateX(-50%) scale(0); opacity: 0; }
+            30% { transform: translateX(-50%) scale(1.2); opacity: 1; }
+            50% { transform: translateX(-50%) scale(1); opacity: 1; }
+            80% { transform: translateX(-50%) scale(1); opacity: 1; }
+            100% { transform: translateX(-50%) scale(0); opacity: 0; }
+        }
+
+        /* ==================== DEMO CONTROLS ==================== */
+        .demo-controls {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 500;
+            background: rgba(0,0,0,0.7);
+            padding: 16px;
+            border-radius: 16px;
+            backdrop-filter: blur(8px);
+        }
+
+        .demo-title {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        .demo-btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .demo-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .demo-btn:active {
+            transform: scale(0.95);
+        }
+
+        .demo-btn.correct {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            color: white;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+        }
+
+        .demo-btn.wrong {
+            background: linear-gradient(135deg, #94a3b8, #64748b);
+            color: white;
+            box-shadow: 0 4px 15px rgba(100, 116, 139, 0.4);
+        }
+
+        .demo-btn.reset {
+            background: linear-gradient(135deg, #f472b6, #ec4899);
+            color: white;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);
+        }
+
+        .demo-btn.auto {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+        }
+
+        .demo-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.2);
+            margin: 8px 0;
+        }
+
+        .demo-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-size: 12px;
+        }
+
+        .demo-toggle input {
+            cursor: pointer;
+        }
+
+        /* ==================== ACCESSIBILITY ==================== */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- HUD Bar - Using Original Assets -->
+        <div class="hud-container">
+            <div class="left-section">
+                <img src="wayarena thumbnail.png" alt="Wayarena Logo" class="wayarena-logo">
+                <div class="hud-pulse-target" id="avatar-container">
+                    <img src="health bar and avatar.png" alt="Health Bar with Avatar" class="health-bar-avatar" id="health-bar-avatar">
+                    <div class="emote-bubble" id="emote-bubble">😊</div>
+                    <div class="hud-floating-text health" id="hud-health-text">+2 HP</div>
+                    <div class="hud-floating-text mana" id="hud-mana-text">+1 Spell</div>
+                </div>
+            </div>
+            <div class="right-section">
+                <img src="Spell nav.png" alt="Spell Navigation" class="spell-nav">
+                <img src="Stun score.png" alt="Stun Score" class="stun-score">
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="question-box">
+                <p class="question-text">Which ancient civilization built the Great Pyramid of Giza?</p>
+                <div class="question-timer">18/30</div>
+            </div>
+        </div>
+
+        <!-- Answer Cards -->
+        <div class="answers-container">
+            <div class="answer-card blue" data-answer="egyptian" data-correct="true">
+                <div class="card-flash"></div>
+                <span class="card-checkmark">✓</span>
+                <span class="card-xmark">✗</span>
+                <span class="try-again-hint">Try again!</span>
+                <span class="answer-badge">2</span>
+                <span class="answer-text">Egyptian</span>
+            </div>
+            <div class="answer-card cyan" data-answer="inca" data-correct="false">
+                <div class="card-flash"></div>
+                <span class="card-checkmark">✓</span>
+                <span class="card-xmark">✗</span>
+                <span class="try-again-hint">Not quite!</span>
+                <span class="answer-badge">2</span>
+                <span class="answer-text">Inca</span>
+            </div>
+            <div class="answer-card orange" data-answer="greek" data-correct="false">
+                <div class="card-flash"></div>
+                <span class="card-checkmark">✓</span>
+                <span class="card-xmark">✗</span>
+                <span class="try-again-hint">Try again!</span>
+                <span class="answer-badge">2</span>
+                <span class="answer-text">Greek</span>
+            </div>
+            <div class="answer-card pink" data-answer="roman" data-correct="false">
+                <div class="card-flash"></div>
+                <span class="card-checkmark">✓</span>
+                <span class="card-xmark">✗</span>
+                <span class="try-again-hint">Not quite!</span>
+                <span class="answer-badge">2</span>
+                <span class="answer-text">Roman</span>
+            </div>
+        </div>
+
+        <!-- Confetti Container -->
+        <div class="confetti-container" id="confetti-container"></div>
+
+        <!-- Reward Modal -->
+        <div class="reward-modal" id="reward-modal">
+            <div class="reward-modal-backdrop"></div>
+            <div class="reward-modal-content">
+                <h1 class="correct-title">✓ CORRECT!</h1>
+                
+                <div class="rewards-container">
+                    <div class="reward-item health-reward">
+                        <span class="reward-icon">❤️</span>
+                        <div class="reward-details">
+                            <div class="reward-text health">+2 Health</div>
+                            <div class="mini-bar-container">
+                                <div class="mini-bar-fill health" id="modal-health-bar"></div>
+                                <span class="mini-bar-value" id="modal-health-value">10 → 12</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="reward-item mana-reward">
+                        <span class="reward-icon">⚡</span>
+                        <div class="reward-details">
+                            <div class="reward-text mana">+1 Spell</div>
+                            <div class="mini-bar-container">
+                                <div class="mini-bar-fill mana" id="modal-mana-bar"></div>
+                                <span class="mini-bar-value" id="modal-mana-value">5 → 6</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <p class="dismiss-hint">Press SPACE or click to continue</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demo Controls -->
+    <div class="demo-controls">
+        <div class="demo-title">🎮 Demo Controls</div>
+        <button class="demo-btn correct" onclick="demoCorrect()">✓ Correct Answer</button>
+        <button class="demo-btn wrong" onclick="demoWrong()">✗ Wrong Answer</button>
+        <button class="demo-btn reset" onclick="resetGame()">↺ Reset</button>
+        <div class="demo-divider"></div>
+        <button class="demo-btn auto" onclick="autoDemo()">▶ Auto Demo</button>
+        <div class="demo-divider"></div>
+        <label class="demo-toggle">
+            <input type="checkbox" id="sound-toggle" checked>
+            🔊 Sound Effects
+        </label>
+        <label class="demo-toggle">
+            <input type="checkbox" id="skip-toggle">
+            ⏩ Skip Animations
+        </label>
+    </div>
+
+    <script>
+        // ==================== GAME STATE ====================
+        const state = {
+            health: 10,
+            maxHealth: 12,
+            mana: 5,
+            maxMana: 8,
+            isAnimating: false,
+            selectedCard: null,
+            modalDismissTimeout: null,
+            soundEnabled: true,
+            skipAnimations: false
+        };
+
+        // ==================== DOM ELEMENTS ====================
+        const cards = document.querySelectorAll('.answer-card');
+        const rewardModal = document.getElementById('reward-modal');
+        const confettiContainer = document.getElementById('confetti-container');
+        const avatarImg = document.getElementById('health-bar-avatar');
+        const avatarContainer = document.getElementById('avatar-container');
+        const emoteBubble = document.getElementById('emote-bubble');
+        const hudHealthText = document.getElementById('hud-health-text');
+        const hudManaText = document.getElementById('hud-mana-text');
+        const modalHealthBar = document.getElementById('modal-health-bar');
+        const modalManaBar = document.getElementById('modal-mana-bar');
+        const modalHealthValue = document.getElementById('modal-health-value');
+        const modalManaValue = document.getElementById('modal-mana-value');
+
+        // ==================== SOUND EFFECTS ====================
+        const sounds = {
+            correct: () => {
+                if (!state.soundEnabled) return;
+                // Positive chime sound hook
+                console.log('🔊 Correct sound: positive chime');
+            },
+            wrong: () => {
+                if (!state.soundEnabled) return;
+                // Neutral tap sound hook
+                console.log('🔊 Wrong sound: soft tap');
+            },
+            modalAppear: () => {
+                if (!state.soundEnabled) return;
+                console.log('🔊 Modal whoosh');
+            },
+            rewardFly: () => {
+                if (!state.soundEnabled) return;
+                console.log('🔊 Magical sparkle');
+            }
+        };
+
+        // ==================== CARD CLICK HANDLERS ====================
+        cards.forEach(card => {
+            card.addEventListener('click', () => handleCardClick(card));
+        });
+
+        function handleCardClick(card) {
+            if (state.isAnimating || card.classList.contains('disabled') || card.classList.contains('selected')) {
+                return;
+            }
+
+            state.isAnimating = true;
+            state.selectedCard = card;
+
+            const isCorrect = card.dataset.correct === 'true';
+
+            // Disable other cards immediately
+            cards.forEach(c => {
+                if (c !== card) {
+                    c.classList.add('disabled');
+                }
+            });
+
+            card.classList.add('selected');
+
+            if (isCorrect) {
+                triggerCorrectSequence(card);
+            } else {
+                triggerWrongSequence(card);
+            }
+        }
+
+        // ==================== CORRECT ANSWER SEQUENCE ====================
+        function triggerCorrectSequence(card) {
+            sounds.correct();
+
+            // PHASE 1: Card feedback (0.2s)
+            card.classList.add('correct');
+            createConfetti(card, 30);
+
+            // PHASE 2: Show reward modal (after 0.2s)
+            const modalDelay = state.skipAnimations ? 0 : 200;
+            setTimeout(() => {
+                showRewardModal();
+            }, modalDelay);
+        }
+
+        function showRewardModal() {
+            sounds.modalAppear();
+
+            const healthBoost = 2;
+            const manaBoost = 1;
+
+            // Update modal values
+            const oldHealth = state.health;
+            const oldMana = state.mana;
+            const newHealth = Math.min(state.maxHealth, state.health + healthBoost);
+            const newMana = Math.min(state.maxMana, state.mana + manaBoost);
+
+            modalHealthValue.textContent = `${oldHealth} → ${newHealth}`;
+            modalManaValue.textContent = `${oldMana} → ${newMana}`;
+
+            // Reset and show modal
+            modalHealthBar.style.width = '0%';
+            modalManaBar.style.width = '0%';
+            rewardModal.classList.remove('exiting');
+            rewardModal.classList.add('visible');
+
+            // Animate mini bars after delay
+            setTimeout(() => {
+                modalHealthBar.style.width = `${(newHealth / state.maxHealth) * 100}%`;
+            }, state.skipAnimations ? 0 : 400);
+
+            setTimeout(() => {
+                modalManaBar.style.width = `${(newMana / state.maxMana) * 100}%`;
+            }, state.skipAnimations ? 0 : 600);
+
+            // Store new values
+            state.health = newHealth;
+            state.mana = newMana;
+
+            // Auto-dismiss after 1.2s
+            const dismissDelay = state.skipAnimations ? 300 : 1200;
+            state.modalDismissTimeout = setTimeout(() => {
+                dismissRewardModal();
+            }, dismissDelay);
+
+            // Manual dismiss listeners
+            document.addEventListener('keydown', handleModalDismiss);
+            document.addEventListener('click', handleModalDismissClick);
+        }
+
+        function handleModalDismiss(e) {
+            if (e.key === ' ' || e.key === 'Enter' || e.key === 'Escape') {
+                e.preventDefault();
+                clearTimeout(state.modalDismissTimeout);
+                dismissRewardModal();
+            }
+        }
+
+        function handleModalDismissClick(e) {
+            if (e.target.closest('.reward-modal')) {
+                clearTimeout(state.modalDismissTimeout);
+                dismissRewardModal();
+            }
+        }
+
+        function dismissRewardModal() {
+            document.removeEventListener('keydown', handleModalDismiss);
+            document.removeEventListener('click', handleModalDismissClick);
+
+            // PHASE 3: Modal exit and flying rewards
+            rewardModal.classList.add('exiting');
+
+            setTimeout(() => {
+                rewardModal.classList.remove('visible', 'exiting');
+                
+                // Fly rewards to HUD
+                flyRewardsToHUD();
+                
+                // Character celebration
+                triggerCharacterCelebration();
+                
+            }, state.skipAnimations ? 0 : 200);
+        }
+
+        function flyRewardsToHUD() {
+            sounds.rewardFly();
+
+            const modalRect = document.querySelector('.reward-modal-content').getBoundingClientRect();
+            const hudRect = avatarContainer.getBoundingClientRect();
+
+            const startX = modalRect.left + modalRect.width / 2;
+            const startY = modalRect.top + modalRect.height / 2;
+            const endX = hudRect.left + hudRect.width / 2;
+            const endY = hudRect.top + hudRect.height / 2;
+
+            // Create flying health reward
+            createFlyingReward('❤️', '+2', startX, startY, endX, endY, 'health', 0, () => {
+                avatarContainer.classList.add('pulse-health');
+                hudHealthText.classList.add('animate');
+                setTimeout(() => {
+                    avatarContainer.classList.remove('pulse-health');
+                    hudHealthText.classList.remove('animate');
+                }, 500);
+            });
+
+            // Create flying mana reward (slight delay)
+            setTimeout(() => {
+                createFlyingReward('⚡', '+1', startX, startY + 40, endX, endY + 20, 'mana', 0, () => {
+                    avatarContainer.classList.add('pulse-mana');
+                    hudManaText.classList.add('animate');
+                    setTimeout(() => {
+                        avatarContainer.classList.remove('pulse-mana');
+                        hudManaText.classList.remove('animate');
+                    }, 500);
+                });
+            }, state.skipAnimations ? 0 : 100);
+
+            // End animation state after everything completes
+            setTimeout(() => {
+                state.isAnimating = false;
+            }, state.skipAnimations ? 100 : 800);
+        }
+
+        function createFlyingReward(icon, text, startX, startY, endX, endY, type, delay, onComplete) {
+            const flyingEl = document.createElement('div');
+            flyingEl.className = `flying-reward ${type}`;
+            flyingEl.innerHTML = `<span class="icon">${icon}</span><span>${text}</span>`;
+            flyingEl.style.left = startX + 'px';
+            flyingEl.style.top = startY + 'px';
+            document.body.appendChild(flyingEl);
+
+            // Calculate bezier curve control point (arc upward)
+            const midX = (startX + endX) / 2;
+            const midY = Math.min(startY, endY) - 100;
+
+            const duration = state.skipAnimations ? 100 : 500;
+            const startTime = performance.now() + delay;
+
+            let trailInterval;
+            if (!state.skipAnimations) {
+                // Create particle trail
+                trailInterval = setInterval(() => {
+                    createTrailParticle(flyingEl, type);
+                }, 30);
+            }
+
+            function animate(currentTime) {
+                const elapsed = currentTime - startTime;
+                if (elapsed < 0) {
+                    requestAnimationFrame(animate);
+                    return;
+                }
+
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = easeInOutCubic(progress);
+
+                // Quadratic bezier curve
+                const x = quadraticBezier(startX, midX, endX, eased);
+                const y = quadraticBezier(startY, midY, endY, eased);
+
+                flyingEl.style.left = x + 'px';
+                flyingEl.style.top = y + 'px';
+                flyingEl.style.transform = `scale(${1 - progress * 0.3})`;
+                flyingEl.style.opacity = 1 - progress * 0.5;
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    if (trailInterval) clearInterval(trailInterval);
+                    flyingEl.remove();
+                    if (onComplete) onComplete();
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        function createTrailParticle(parent, type) {
+            const rect = parent.getBoundingClientRect();
+            const trail = document.createElement('div');
+            trail.className = `flying-trail ${type}`;
+            trail.style.left = (rect.left + rect.width / 2) + 'px';
+            trail.style.top = (rect.top + rect.height / 2) + 'px';
+            trail.style.position = 'fixed';
+            trail.style.zIndex = '1999';
+            document.body.appendChild(trail);
+
+            trail.animate([
+                { opacity: 1, transform: 'scale(1)' },
+                { opacity: 0, transform: 'scale(0)' }
+            ], {
+                duration: 300,
+                easing: 'ease-out'
+            }).onfinish = () => trail.remove();
+        }
+
+        function quadraticBezier(p0, p1, p2, t) {
+            return (1 - t) * (1 - t) * p0 + 2 * (1 - t) * t * p1 + t * t * p2;
+        }
+
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function triggerCharacterCelebration() {
+            // Avatar bounce
+            avatarImg.classList.add('celebrating');
+            setTimeout(() => avatarImg.classList.remove('celebrating'), 600);
+
+            // Emote bubble
+            const emotes = ['😊', '💪', '⭐', '🎉', '✨'];
+            emoteBubble.textContent = emotes[Math.floor(Math.random() * emotes.length)];
+            emoteBubble.classList.add('animate');
+            setTimeout(() => emoteBubble.classList.remove('animate'), 800);
+        }
+
+        // ==================== CONFETTI ====================
+        function createConfetti(sourceElement, count = 25) {
+            const rect = sourceElement.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const colors = ['#FFD700', '#FFFFFF', '#FF69B4', '#00CED1', '#FFA500', '#00FF00'];
+            const shapes = ['circle', 'square', 'triangle'];
+
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const size = 6 + Math.random() * 10;
+                const shape = shapes[Math.floor(Math.random() * shapes.length)];
+                
+                confetti.style.width = size + 'px';
+                confetti.style.height = size + 'px';
+                confetti.style.background = color;
+                confetti.style.left = centerX + 'px';
+                confetti.style.top = centerY + 'px';
+                
+                if (shape === 'circle') {
+                    confetti.style.borderRadius = '50%';
+                } else if (shape === 'triangle') {
+                    confetti.style.width = '0';
+                    confetti.style.height = '0';
+                    confetti.style.background = 'transparent';
+                    confetti.style.borderLeft = `${size/2}px solid transparent`;
+                    confetti.style.borderRight = `${size/2}px solid transparent`;
+                    confetti.style.borderBottom = `${size}px solid ${color}`;
+                } else {
+                    confetti.style.borderRadius = '2px';
+                }
+
+                confettiContainer.appendChild(confetti);
+
+                // Animate
+                const angle = (Math.random() * Math.PI * 2);
+                const velocity = 150 + Math.random() * 200;
+                const tx = Math.cos(angle) * velocity;
+                const ty = Math.sin(angle) * velocity - 150; // Bias upward
+                const rotation = Math.random() * 720 - 360;
+
+                confetti.animate([
+                    { 
+                        opacity: 1, 
+                        transform: 'translate(0, 0) rotate(0deg) scale(1)' 
+                    },
+                    { 
+                        opacity: 0, 
+                        transform: `translate(${tx}px, ${ty}px) rotate(${rotation}deg) scale(0.2)` 
+                    }
+                ], {
+                    duration: 600 + Math.random() * 400,
+                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                    fill: 'forwards'
+                }).onfinish = () => confetti.remove();
+            }
+        }
+
+        // ==================== WRONG ANSWER SEQUENCE ====================
+        function triggerWrongSequence(card) {
+            sounds.wrong();
+
+            // PHASE 1: Gentle shake
+            card.classList.add('wrong');
+
+            // PHASE 2 & 3: Return to normal
+            const returnDelay = state.skipAnimations ? 100 : 500;
+            setTimeout(() => {
+                card.classList.remove('selected', 'wrong');
+                
+                // Re-enable all cards
+                cards.forEach(c => c.classList.remove('disabled'));
+                
+                state.isAnimating = false;
+                state.selectedCard = null;
+            }, returnDelay);
+        }
+
+        // ==================== DEMO FUNCTIONS ====================
+        function demoCorrect() {
+            if (state.isAnimating) return;
+            resetGame();
+            setTimeout(() => {
+                const correctCard = document.querySelector('[data-correct="true"]');
+                handleCardClick(correctCard);
+            }, 100);
+        }
+
+        function demoWrong() {
+            if (state.isAnimating) return;
+            resetGame();
+            setTimeout(() => {
+                const wrongCard = document.querySelector('[data-correct="false"]');
+                handleCardClick(wrongCard);
+            }, 100);
+        }
+
+        function resetGame() {
+            clearTimeout(state.modalDismissTimeout);
+            document.removeEventListener('keydown', handleModalDismiss);
+            document.removeEventListener('click', handleModalDismissClick);
+
+            state.isAnimating = false;
+            state.selectedCard = null;
+            state.health = 10;
+            state.mana = 5;
+
+            // Reset modal
+            rewardModal.classList.remove('visible', 'exiting');
+
+            // Reset all cards
+            cards.forEach(card => {
+                card.classList.remove('selected', 'correct', 'wrong', 'disabled');
+            });
+
+            // Clear confetti
+            confettiContainer.innerHTML = '';
+
+            // Remove any flying elements
+            document.querySelectorAll('.flying-reward, .flying-trail').forEach(el => el.remove());
+
+            // Reset avatar
+            avatarImg.classList.remove('celebrating');
+            emoteBubble.classList.remove('animate');
+            avatarContainer.classList.remove('pulse-health', 'pulse-mana');
+        }
+
+        function autoDemo() {
+            if (state.isAnimating) return;
+
+            resetGame();
+
+            // Sequence: wrong → wrong → correct
+            setTimeout(() => {
+                const wrongCards = document.querySelectorAll('[data-correct="false"]');
+                handleCardClick(wrongCards[0]);
+            }, 500);
+
+            setTimeout(() => {
+                const wrongCards = document.querySelectorAll('[data-correct="false"]');
+                handleCardClick(wrongCards[1]);
+            }, 1500);
+
+            setTimeout(() => {
+                const correctCard = document.querySelector('[data-correct="true"]');
+                handleCardClick(correctCard);
+            }, 2500);
+        }
+
+        // ==================== TOGGLE HANDLERS ====================
+        document.getElementById('sound-toggle').addEventListener('change', (e) => {
+            state.soundEnabled = e.target.checked;
+        });
+
+        document.getElementById('skip-toggle').addEventListener('change', (e) => {
+            state.skipAnimations = e.target.checked;
+        });
+
+        // ==================== KEYBOARD SHORTCUTS ====================
+        document.addEventListener('keydown', (e) => {
+            if (rewardModal.classList.contains('visible')) return; // Let modal handler take over
+            
+            if (e.key === '1') handleCardClick(cards[0]);
+            if (e.key === '2') handleCardClick(cards[1]);
+            if (e.key === '3') handleCardClick(cards[2]);
+            if (e.key === '4') handleCardClick(cards[3]);
+            if (e.key === 'r' || e.key === 'R') resetGame();
+        });
+
+        // ==================== INITIALIZATION ====================
+        console.log('🎮 Wayarena Quiz Game Loaded!');
+        console.log('Controls:');
+        console.log('  1-4: Select answer cards');
+        console.log('  R: Reset game');
+        console.log('  SPACE/ENTER: Dismiss reward modal');
+    </script>
+</body>
+</html>

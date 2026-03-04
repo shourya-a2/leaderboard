@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wayarena - Spell HUD Animation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Spell Colors - Bright */
+            --blue-bright: #00BFFF;
+            --green-bright: #00FF00;
+            --red-bright: #FF4444;
+            
+            /* Spell Colors - Muted */
+            --blue-muted: #87CEEB;
+            --green-muted: #90EE90;
+            --red-muted: #FF7F7F;
+            
+            /* Spell Colors - Background */
+            --blue-bg: #00CED1;
+            --green-bg: #32CD32;
+            --red-bg: #8B2635;
+            
+            /* Other */
+            --success-gold: #FFD700;
+            --wrong-gray: #999999;
+            
+            /* Timing */
+            --bounce-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        body {
+            min-height: 100vh;
+            background: url('BG.png') center center;
+            background-size: cover;
+            font-family: 'Fredoka', system-ui, sans-serif;
+            overflow: hidden;
+        }
+
+        .game-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* ==================== TOP HUD BAR ==================== */
+        .hud-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(to bottom, rgba(30, 35, 50, 0.98), rgba(20, 25, 40, 0.95));
+            border-bottom: 3px solid #4a90d9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 16px;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .hud-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hud-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .wayarena-logo {
+            height: 46px;
+            width: auto;
+        }
+
+
+        .avatar-health-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .avatar-health-img {
+            height: 42px;
+            width: auto;
+            transition: transform 0.3s var(--bounce-ease);
+        }
+
+        .avatar-health-container.celebrating .avatar-health-img {
+            animation: avatarCelebrate 0.6s var(--bounce-ease);
+        }
+
+        @keyframes avatarCelebrate {
+            0% { transform: scale(1) translateY(0); }
+            25% { transform: scale(1.08) translateY(-3px); }
+            50% { transform: scale(1.05) translateY(-1px); }
+            75% { transform: scale(1.06) translateY(-2px); }
+            100% { transform: scale(1) translateY(0); }
+        }
+
+        .emote-bubble {
+            position: absolute;
+            top: -18px;
+            left: 20px;
+            transform: translateX(-50%) scale(0);
+            font-size: 16px;
+            background: white;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+            pointer-events: none;
+            z-index: 150;
+        }
+
+        .emote-bubble.animate {
+            animation: emotePop 0.8s var(--bounce-ease) forwards;
+        }
+
+        @keyframes emotePop {
+            0% { transform: translateX(-50%) scale(0); opacity: 0; }
+            30% { transform: translateX(-50%) scale(1.2); opacity: 1; }
+            50% { transform: translateX(-50%) scale(1); opacity: 1; }
+            80% { transform: translateX(-50%) scale(1); opacity: 1; }
+            100% { transform: translateX(-50%) scale(0); opacity: 0; }
+        }
+
+        /* ==================== HUD SPELL CIRCLES (in top bar) ==================== */
+        .spell-slots-hud {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .spell-circle {
+            width: 40px;
+            height: 40px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s var(--bounce-ease), filter 0.3s ease;
+        }
+
+        .spell-circle:hover.unlocked {
+            transform: scale(1.12);
+        }
+
+        /* Spell image - the PNG already has the colored circle with wand */
+        .spell-image {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: contain;
+            transition: filter 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+            /* Subtle dark border to separate from stroke ring */
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Stroke Ring SVG - hugs the image tightly */
+        .stroke-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 48px;
+            height: 48px;
+            transform: translate(-50%, -50%) rotate(-90deg);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .stroke-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 3;
+        }
+
+        .stroke-fill {
+            fill: none;
+            stroke-width: 3.5;
+            stroke-linecap: round;
+            stroke-dasharray: 138.2; /* 2 * PI * 22 */
+            stroke-dashoffset: 138.2;
+            transition: stroke-dashoffset 0.2s ease-out, stroke 0.15s ease, filter 0.15s ease;
+        }
+
+        /* Stroke Colors - bright and glowing */
+        .stroke-fill.red { stroke: #FF6B6B; filter: drop-shadow(0 0 4px #FF4444); }
+        .stroke-fill.blue { stroke: #00BFFF; filter: drop-shadow(0 0 4px #00BFFF); }
+        .stroke-fill.green { stroke: #6BCB77; filter: drop-shadow(0 0 4px #22c55e); }
+
+        /* Muted colors for wrong answers */
+        .stroke-fill.muted.red { stroke: #BB7777; filter: none; }
+        .stroke-fill.muted.blue { stroke: #6699AA; filter: none; }
+        .stroke-fill.muted.green { stroke: #77AA77; filter: none; }
+
+        /* Progress Text - shows ABOVE circle since HUD is at top */
+        .progress-text {
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            font-weight: 700;
+            opacity: 0;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
+            white-space: nowrap;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+        }
+
+        .progress-text.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-2px);
+        }
+
+        /* ==================== GLOW STATES ==================== */
+        .spell-circle.glowing-bright {
+            animation: glow-pulse-bright 0.25s var(--bounce-ease);
+        }
+
+        .spell-circle.glowing-dim {
+            animation: glow-pulse-dim 0.2s ease-out;
+        }
+
+        @keyframes glow-pulse-bright {
+            0% { 
+                transform: scale(1);
+                filter: drop-shadow(0 0 0px white);
+            }
+            50% { 
+                transform: scale(1.25);
+                filter: drop-shadow(0 0 15px white) drop-shadow(0 0 30px rgba(255,255,255,0.7));
+            }
+            100% { 
+                transform: scale(1);
+                filter: drop-shadow(0 0 8px white);
+            }
+        }
+
+        @keyframes glow-pulse-dim {
+            0% { 
+                transform: scale(1);
+                filter: drop-shadow(0 0 0px white);
+            }
+            50% { 
+                transform: scale(1.12);
+                filter: drop-shadow(0 0 8px rgba(255,255,255,0.4));
+            }
+            100% { 
+                transform: scale(1);
+                filter: drop-shadow(0 0 4px rgba(255,255,255,0.2));
+            }
+        }
+
+        /* Image glow during animation */
+        .spell-circle.glowing-bright .spell-image {
+            filter: brightness(1.4) saturate(1.2) !important;
+            opacity: 1 !important;
+        }
+
+        .spell-circle.glowing-dim .spell-image {
+            filter: brightness(1.15) saturate(0.9) !important;
+            opacity: 0.9 !important;
+        }
+
+        /* ==================== CIRCLE STATES ==================== */
+        /* Empty State (0% progress) - visible but dormant */
+        .spell-circle.empty .spell-image {
+            filter: saturate(0.5) brightness(0.7);
+            opacity: 0.65;
+        }
+
+        .spell-circle.empty .stroke-bg {
+            stroke: rgba(255, 255, 255, 0.08);
+        }
+
+        .spell-circle.empty .stroke-fill {
+            opacity: 0.15;
+            filter: none;
+        }
+
+        /* Partial State (1-99% progress) - charging up */
+        .spell-circle.partial .spell-image {
+            filter: saturate(0.8) brightness(0.9);
+            opacity: 0.85;
+        }
+
+        .spell-circle.partial .stroke-bg {
+            stroke: rgba(255, 255, 255, 0.12);
+        }
+
+        /* Unlocked State (100% progress) - full power, glowing */
+        .spell-circle.unlocked .spell-image {
+            filter: brightness(1.15) saturate(1.15);
+            opacity: 1;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.3), 0 0 12px rgba(255, 255, 255, 0.3);
+        }
+
+        .spell-circle.unlocked .stroke-fill {
+            animation: stroke-glow-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes stroke-glow-pulse {
+            0%, 100% { 
+                filter: drop-shadow(0 0 4px currentColor) drop-shadow(0 0 8px currentColor);
+            }
+            50% { 
+                filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 16px currentColor);
+            }
+        }
+
+        .spell-circle.unlocked {
+            animation: unlocked-pulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes unlocked-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+        }
+
+        /* Afterglow effect - lingers after animation */
+        .spell-circle.just-updated .spell-image {
+            filter: brightness(1.2) saturate(1.1);
+            transition: filter 1s ease-out;
+        }
+
+        .spell-circle.just-updated .stroke-fill {
+            filter: drop-shadow(0 0 8px currentColor);
+            transition: filter 1s ease-out;
+        }
+
+        /* Stuns Badge */
+        .stuns-badge {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            padding: 5px 12px 5px 8px;
+            border-radius: 18px;
+            border: 2px solid #15803d;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .stuns-badge .lightning {
+            font-size: 16px;
+            filter: drop-shadow(0 0 4px #fbbf24);
+        }
+
+        .stuns-badge .stuns-text {
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        /* ==================== QUESTION BOX ==================== */
+        .question-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(25, 25, 35, 0.95);
+            border-radius: 20px;
+            padding: 28px 48px;
+            max-width: 700px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .question-text {
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .question-timer {
+            position: absolute;
+            bottom: -18px;
+            right: 24px;
+            background: rgba(45, 45, 55, 0.98);
+            color: #ffffff;
+            padding: 8px 18px;
+            border-radius: 24px;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* ==================== ANSWER CARDS ==================== */
+        .answer-cards-container {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 16px;
+        }
+
+        .answer-card {
+            width: 280px;
+            height: 160px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            position: relative;
+            border: 4px solid transparent;
+        }
+
+        .answer-card.blue { background: linear-gradient(to bottom, #1E90FF, #1565C0); }
+        .answer-card.cyan { background: linear-gradient(to bottom, #00CED1, #00838F); }
+        .answer-card.orange { background: linear-gradient(to bottom, #FFA500, #E65100); }
+        .answer-card.pink { background: linear-gradient(to bottom, #FF69B4, #C2185B); }
+
+        .answer-card:hover:not(.disabled) {
+            transform: scale(1.03);
+            filter: brightness(1.1);
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+        }
+
+        .answer-card:active:not(.disabled) {
+            transform: scale(0.97);
+        }
+
+        .answer-card.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+            filter: grayscale(0.3);
+        }
+
+        .answer-card.selected-correct {
+            transform: scale(1.15);
+            border: 4px solid var(--success-gold);
+            box-shadow: 0 0 30px var(--success-gold);
+            animation: correctPulse 0.8s ease-out;
+        }
+
+        @keyframes correctPulse {
+            0% { 
+                box-shadow: 0 0 30px var(--success-gold);
+                filter: brightness(1);
+            }
+            15% { 
+                box-shadow: 0 0 60px var(--success-gold), inset 0 0 30px rgba(255, 255, 255, 0.5);
+                filter: brightness(1.4);
+            }
+            40% {
+                box-shadow: 0 0 40px var(--success-gold);
+                filter: brightness(1.1);
+            }
+            100% { 
+                box-shadow: 0 0 30px var(--success-gold);
+                filter: brightness(1);
+            }
+        }
+
+        .answer-card.selected-wrong {
+            animation: shake 0.3s linear;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        /* Card Overlays */
+        .card-checkmark {
+            position: absolute;
+            font-size: 64px;
+            color: #00FF00;
+            text-shadow: 0 0 20px #00FF00;
+            opacity: 0;
+            transform: scale(0);
+        }
+
+        .answer-card.selected-correct .card-checkmark {
+            animation: checkmarkPop 0.3s var(--bounce-ease) forwards;
+        }
+
+        @keyframes checkmarkPop {
+            0% { opacity: 0; transform: scale(0); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .card-xmark {
+            position: absolute;
+            font-size: 48px;
+            color: var(--wrong-gray);
+            opacity: 0;
+        }
+
+        .answer-card.selected-wrong .card-xmark {
+            animation: xmarkFade 0.6s ease-out;
+        }
+
+        @keyframes xmarkFade {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+
+        /* ==================== PARTICLES ==================== */
+        .spell-particle {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: particle-burst 0.5s ease-out forwards;
+        }
+
+        @keyframes particle-burst {
+            0% {
+                transform: translate(0, 0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(0);
+                opacity: 0;
+            }
+        }
+
+        @keyframes float-up-fade {
+            0% { 
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+            100% { 
+                transform: translateX(-50%) translateY(-30px);
+                opacity: 0;
+            }
+        }
+
+        /* ==================== CONFETTI ==================== */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 500;
+            overflow: hidden;
+        }
+
+        /* ==================== FLYING REWARDS ==================== */
+        .flying-reward {
+            position: fixed;
+            pointer-events: none;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+
+        .flying-reward.red {
+            background: radial-gradient(circle, #FF6B6B, #FF4444);
+            filter: drop-shadow(0 0 15px #FF4444) drop-shadow(0 0 30px rgba(255, 68, 68, 0.5));
+            box-shadow: 0 0 20px #FF4444, 0 0 40px rgba(255, 68, 68, 0.4);
+        }
+
+        .flying-reward.blue {
+            background: radial-gradient(circle, #00BFFF, #0099CC);
+            filter: drop-shadow(0 0 15px #00BFFF) drop-shadow(0 0 30px rgba(0, 191, 255, 0.5));
+            box-shadow: 0 0 20px #00BFFF, 0 0 40px rgba(0, 191, 255, 0.4);
+        }
+
+        .flying-reward.green {
+            background: radial-gradient(circle, #6BCB77, #22c55e);
+            filter: drop-shadow(0 0 15px #22c55e) drop-shadow(0 0 30px rgba(34, 197, 94, 0.5));
+            box-shadow: 0 0 20px #22c55e, 0 0 40px rgba(34, 197, 94, 0.4);
+        }
+
+        .flying-reward.muted {
+            filter: drop-shadow(0 0 8px rgba(150, 150, 150, 0.5));
+            box-shadow: 0 0 10px rgba(150, 150, 150, 0.3);
+            opacity: 0.7;
+        }
+
+        .flying-reward.muted.red {
+            background: radial-gradient(circle, #BB7777, #996666);
+        }
+
+        .flying-reward.muted.blue {
+            background: radial-gradient(circle, #6699AA, #558899);
+        }
+
+        .flying-reward.muted.green {
+            background: radial-gradient(circle, #77AA77, #669966);
+        }
+
+        .flying-reward .icon {
+            font-size: 20px;
+        }
+
+        /* Flying trail particles */
+        .flying-trail {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1999;
+        }
+
+        .flying-trail.red {
+            background: radial-gradient(circle, white, #FF6B6B);
+            box-shadow: 0 0 10px #FF4444;
+        }
+
+        .flying-trail.blue {
+            background: radial-gradient(circle, white, #00BFFF);
+            box-shadow: 0 0 10px #00BFFF;
+        }
+
+        .flying-trail.green {
+            background: radial-gradient(circle, white, #6BCB77);
+            box-shadow: 0 0 10px #22c55e;
+        }
+
+        .flying-trail.muted {
+            background: radial-gradient(circle, #CCC, #999);
+            box-shadow: 0 0 5px rgba(150, 150, 150, 0.5);
+        }
+
+        /* HUD pulse effect when flying reward arrives */
+        .spell-circle.receiving-reward {
+            animation: receive-pulse 0.4s var(--bounce-ease);
+        }
+
+        @keyframes receive-pulse {
+            0% { 
+                transform: scale(1);
+                filter: drop-shadow(0 0 0 white);
+            }
+            50% { 
+                transform: scale(1.35);
+                filter: drop-shadow(0 0 20px white) drop-shadow(0 0 40px rgba(255,255,255,0.8));
+            }
+            100% { 
+                transform: scale(1);
+                filter: drop-shadow(0 0 10px white);
+            }
+        }
+
+        /* ==================== DEMO CONTROLS ==================== */
+        .demo-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 500;
+            background: rgba(0,0,0,0.85);
+            padding: 16px;
+            border-radius: 16px;
+            backdrop-filter: blur(8px);
+            max-width: 160px;
+        }
+
+        .demo-title {
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        .demo-btn {
+            padding: 10px 12px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .demo-btn:hover { transform: scale(1.05); }
+        .demo-btn:active { transform: scale(0.95); }
+
+        .demo-btn.correct {
+            background: linear-gradient(135deg, #4ade80, #22c55e);
+            color: white;
+        }
+
+        .demo-btn.wrong {
+            background: linear-gradient(135deg, #94a3b8, #64748b);
+            color: white;
+        }
+
+        .demo-btn.reset {
+            background: linear-gradient(135deg, #f472b6, #ec4899);
+            color: white;
+        }
+
+        .demo-btn.fill {
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+            color: white;
+            font-size: 10px;
+        }
+
+        .demo-btn.back {
+            background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+            color: white;
+        }
+
+        .demo-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.2);
+            margin: 4px 0;
+        }
+
+        .demo-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: white;
+            font-size: 10px;
+        }
+
+        .demo-toggle input { cursor: pointer; }
+
+        /* ==================== ACCESSIBILITY ==================== */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Top HUD Bar -->
+        <div class="hud-bar">
+            <div class="hud-left">
+                <div class="logo-container">
+                    <img src="wayarena thumbnail.png" alt="Wayarena" class="wayarena-logo">
+                </div>
+                <div class="avatar-health-container" id="avatar-container">
+                    <img src="health bar and avatar.png" alt="Avatar and Health" class="avatar-health-img">
+                    <div class="emote-bubble" id="emote-bubble">✨</div>
+                </div>
+            </div>
+
+            <div class="hud-right">
+                <!-- Spell Circles in HUD -->
+                <div class="spell-slots-hud">
+                    <!-- Spell 1: rapidFire (Red) - Spell 5.png -->
+                    <div class="spell-circle empty" data-spell="rapidFire" id="spell-rapid">
+                        <img src="Spell 5.png" class="spell-image" alt="Rapid Fire">
+                        <svg class="stroke-ring" viewBox="0 0 48 48">
+                            <circle class="stroke-bg" cx="24" cy="24" r="22"/>
+                            <circle class="stroke-fill red" cx="24" cy="24" r="22" id="stroke-rapid"/>
+                        </svg>
+                        <div class="progress-text" id="progress-rapid"></div>
+                    </div>
+
+                    <!-- Spell 2: magicMissile (Blue) - Spell 4.png -->
+                    <div class="spell-circle empty" data-spell="magicMissile" id="spell-magic">
+                        <img src="Spell 4.png" class="spell-image" alt="Magic Missile">
+                        <svg class="stroke-ring" viewBox="0 0 48 48">
+                            <circle class="stroke-bg" cx="24" cy="24" r="22"/>
+                            <circle class="stroke-fill blue" cx="24" cy="24" r="22" id="stroke-magic"/>
+                        </svg>
+                        <div class="progress-text" id="progress-magic"></div>
+                    </div>
+
+                    <!-- Spell 3: scatterShot (Green) - Spell 3 circle.png -->
+                    <div class="spell-circle empty" data-spell="scatterShot" id="spell-scatter">
+                        <img src="Spell 3 circle.png" class="spell-image" alt="Scatter Shot">
+                        <svg class="stroke-ring" viewBox="0 0 48 48">
+                            <circle class="stroke-bg" cx="24" cy="24" r="22"/>
+                            <circle class="stroke-fill green" cx="24" cy="24" r="22" id="stroke-scatter"/>
+                        </svg>
+                        <div class="progress-text" id="progress-scatter"></div>
+                    </div>
+                </div>
+
+                <!-- Stuns Badge -->
+                <div class="stuns-badge">
+                    <span class="lightning">⚡</span>
+                    <span class="stuns-text">Stuns <span id="stuns-count">1</span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question Box -->
+        <div class="question-box">
+            <p class="question-text">Which ancient civilization built the Great Pyramid of Giza?</p>
+            <div class="question-timer">18/30</div>
+        </div>
+
+        <!-- Answer Cards -->
+        <div class="answer-cards-container">
+            <div class="answer-card blue" data-correct="true">
+                <span class="card-checkmark">✓</span>
+                <span class="card-xmark">✗</span>
+                Egyptian
+            </div>
+            <div class="answer-card cyan" data-correct="false">
+                <span class="card-checkmark">✓</span>
+                <span class="card-xmark">✗</span>
+                Inca
+            </div>
+            <div class="answer-card orange" data-correct="false">
+                <span class="card-checkmark">✓</span>
+                <span class="card-xmark">✗</span>
+                Greek
+            </div>
+            <div class="answer-card pink" data-correct="false">
+                <span class="card-checkmark">✓</span>
+                <span class="card-xmark">✗</span>
+                Roman
+            </div>
+        </div>
+
+        <!-- Confetti Container -->
+        <div class="confetti-container" id="confetti-container"></div>
+    </div>
+
+    <!-- Demo Controls -->
+    <div class="demo-controls">
+        <div class="demo-title">🎮 Demo Controls</div>
+        <button class="demo-btn back" onclick="window.location.href='index.html'">← Back to Menu</button>
+        <div class="demo-divider"></div>
+        <button class="demo-btn correct" onclick="triggerCorrect()">✓ Correct Answer</button>
+        <button class="demo-btn wrong" onclick="triggerWrong()">✗ Wrong Answer</button>
+        <div class="demo-divider"></div>
+        <button class="demo-btn fill" onclick="fillTo90()">Fill All to 90%</button>
+        <button class="demo-btn reset" onclick="resetAll()">↺ Reset Progress</button>
+        <div class="demo-divider"></div>
+        <label class="demo-toggle">
+            <input type="checkbox" id="fast-toggle">
+            ⏩ Fast Mode
+        </label>
+    </div>
+
+    <script>
+        // ==================== PROGRESS TRACKING ====================
+        const spellProgress = {
+            magicMissile: 0,  // Blue
+            scatterShot: 0,   // Green
+            rapidFire: 0      // Red
+        };
+
+        // Progress increments
+        const CORRECT_INCREMENTS = {
+            magicMissile: 10,
+            scatterShot: 6,
+            rapidFire: 9
+        };
+
+        const WRONG_INCREMENTS = {
+            magicMissile: 6,
+            scatterShot: 3,
+            rapidFire: 9
+        };
+
+        // Spell colors (Blue for magic missile now)
+        const SPELL_COLORS = {
+            magicMissile: '#00BFFF',  // Blue
+            scatterShot: '#6BCB77',   // Green
+            rapidFire: '#FF6B6B'      // Red
+        };
+
+        // Circumference for stroke calculation (radius = 22)
+        const CIRCUMFERENCE = 138.2; // 2 * π * 22
+
+        // Animation state
+        let isAnimating = false;
+        let score = 0;
+
+        // ==================== DOM ELEMENTS ====================
+        const cards = document.querySelectorAll('.answer-card');
+        const confettiContainer = document.getElementById('confetti-container');
+        const avatarContainer = document.getElementById('avatar-container');
+        const emoteBubble = document.getElementById('emote-bubble');
+
+        const spellElements = {
+            magicMissile: {
+                circle: document.getElementById('spell-magic'),
+                stroke: document.getElementById('stroke-magic'),
+                progress: document.getElementById('progress-magic')
+            },
+            scatterShot: {
+                circle: document.getElementById('spell-scatter'),
+                stroke: document.getElementById('stroke-scatter'),
+                progress: document.getElementById('progress-scatter')
+            },
+            rapidFire: {
+                circle: document.getElementById('spell-rapid'),
+                stroke: document.getElementById('stroke-rapid'),
+                progress: document.getElementById('progress-rapid')
+            }
+        };
+
+        // ==================== CARD CLICK HANDLER ====================
+        // Animation queue for non-blocking animations
+        let animationQueue = [];
+        let isProcessingQueue = false;
+        
+        cards.forEach(card => {
+            card.addEventListener('click', () => handleCardClick(card));
+        });
+
+        function handleCardClick(card) {
+            // Allow clicking even during HUD animations (non-blocking)
+            if (card.classList.contains('disabled')) return;
+            
+            const isCorrect = card.dataset.correct === 'true';
+            
+            // Store the clicked card for flying animation source
+            lastClickedCard = card;
+            
+            // Brief card feedback (NON-BLOCKING - cards re-enable quickly)
+            cards.forEach(c => c.classList.add('disabled'));
+            
+            if (isCorrect) {
+                card.classList.add('selected-correct');
+                createConfetti(card, 25);
+                playSound('correct-ding');
+                score += 10;
+                
+                // Queue HUD animation with flying rewards (runs in background)
+                queueHUDAnimation(CORRECT_INCREMENTS, true);
+            } else {
+                card.classList.add('selected-wrong');
+                playSound('neutral-hmm');
+                
+                // Queue HUD animation with flying rewards (runs in background)
+                queueHUDAnimation(WRONG_INCREMENTS, false);
+            }
+            
+            // RE-ENABLE CARDS after card feedback registers
+            // Correct: longer (800ms) so student sees checkmark + golden border + confetti
+            // Wrong: shorter (400ms) since it's just a shake
+            const cardFeedbackDuration = isCorrect ? (isFastMode() ? 400 : 800) : (isFastMode() ? 200 : 400);
+            
+            setTimeout(() => {
+                enableCards();
+            }, cardFeedbackDuration);
+        }
+        
+        // ==================== NON-BLOCKING ANIMATION QUEUE ====================
+        function queueHUDAnimation(increments, isBright) {
+            animationQueue.push({ increments, isBright });
+            
+            if (!isProcessingQueue) {
+                processNextAnimation();
+            }
+        }
+        
+        function processNextAnimation() {
+            if (animationQueue.length === 0) {
+                isProcessingQueue = false;
+                return;
+            }
+            
+            isProcessingQueue = true;
+            const { increments, isBright } = animationQueue.shift();
+            
+            // Use flying animation only for correct answers, simple glow for wrong
+            if (isBright) {
+                // Correct answer: flying animation
+                animateHUDSequenceWithFlying(increments, isBright, () => {
+                    setTimeout(processNextAnimation, 100);
+                });
+            } else {
+                // Wrong answer: simple glow animation (no flying)
+                animateHUDSequenceSimple(increments, isBright, () => {
+                    setTimeout(processNextAnimation, 100);
+                });
+            }
+        }
+
+        // ==================== SEQUENTIAL HUD ANIMATION (NON-BLOCKING) ====================
+        // Store the last clicked card for flying animation source
+        let lastClickedCard = null;
+        
+        // Simple glow animation for WRONG answers (no flying)
+        function animateHUDSequenceSimple(increments, isBright, onComplete) {
+            const spells = ['rapidFire', 'magicMissile', 'scatterShot'];
+            const staggerDelay = isFastMode() ? 100 : 150;
+            
+            spells.forEach((spellName, index) => {
+                setTimeout(() => {
+                    animateSpellCircle(spellName, increments[spellName], isBright);
+                }, index * staggerDelay);
+            });
+            
+            const totalDuration = spells.length * staggerDelay + (isFastMode() ? 200 : 350);
+            setTimeout(() => {
+                if (onComplete) onComplete();
+            }, totalDuration);
+        }
+        
+        // Flying animation for CORRECT answers
+        function animateHUDSequenceWithFlying(increments, isBright, onComplete) {
+            const spells = ['rapidFire', 'magicMissile', 'scatterShot'];
+            const spellColorClasses = {
+                rapidFire: 'red',
+                magicMissile: 'blue',
+                scatterShot: 'green'
+            };
+            
+            // Get source position (from clicked card)
+            const sourceCard = lastClickedCard || document.querySelector('.answer-card');
+            const sourceRect = sourceCard.getBoundingClientRect();
+            const startX = sourceRect.left + sourceRect.width / 2;
+            const startY = sourceRect.top + sourceRect.height / 2;
+            
+            // Stagger delay for flying animations
+            const flyStagger = isFastMode() ? 80 : 120;
+            const flyDuration = isFastMode() ? 350 : 500;
+            
+            spells.forEach((spellName, index) => {
+                const { circle } = spellElements[spellName];
+                const targetRect = circle.getBoundingClientRect();
+                const endX = targetRect.left + targetRect.width / 2;
+                const endY = targetRect.top + targetRect.height / 2;
+                const colorClass = spellColorClasses[spellName];
+                
+                // Launch flying reward with stagger
+                setTimeout(() => {
+                    createFlyingReward(
+                        startX, 
+                        startY, 
+                        endX, 
+                        endY, 
+                        colorClass, 
+                        isBright,
+                        flyDuration,
+                        () => {
+                            // When flying icon arrives, trigger the spell circle animation
+                            animateSpellCircle(spellName, increments[spellName], isBright);
+                            
+                            // Add receiving pulse to spell circle
+                            circle.classList.add('receiving-reward');
+                            setTimeout(() => circle.classList.remove('receiving-reward'), 400);
+                        }
+                    );
+                }, index * flyStagger);
+            });
+            
+            // Call onComplete when all flying + circle animations finish
+            const totalDuration = (spells.length - 1) * flyStagger + flyDuration + (isFastMode() ? 250 : 400);
+            setTimeout(() => {
+                if (onComplete) onComplete();
+            }, totalDuration);
+        }
+        
+        // ==================== FLYING REWARD ANIMATION ====================
+        function createFlyingReward(startX, startY, endX, endY, colorClass, isBright, duration, onComplete) {
+            const flyingEl = document.createElement('div');
+            flyingEl.className = `flying-reward ${colorClass}${isBright ? '' : ' muted'}`;
+            flyingEl.innerHTML = `<span class="icon">✦</span>`;
+            flyingEl.style.left = startX + 'px';
+            flyingEl.style.top = startY + 'px';
+            flyingEl.style.transform = 'translate(-50%, -50%)';
+            document.body.appendChild(flyingEl);
+            
+            // Calculate bezier curve control point (arc upward)
+            const midX = (startX + endX) / 2;
+            const midY = Math.min(startY, endY) - 80; // Arc upward
+            
+            const startTime = performance.now();
+            let trailInterval;
+            
+            // Create particle trail
+            if (!isFastMode()) {
+                trailInterval = setInterval(() => {
+                    createTrailParticle(flyingEl, colorClass, isBright);
+                }, 25);
+            }
+            
+            function animate(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = easeInOutCubic(progress);
+                
+                // Quadratic bezier curve for smooth arc
+                const x = quadraticBezier(startX, midX, endX, eased);
+                const y = quadraticBezier(startY, midY, endY, eased);
+                
+                flyingEl.style.left = x + 'px';
+                flyingEl.style.top = y + 'px';
+                
+                // Scale down and fade slightly as it approaches target
+                const scale = 1 - progress * 0.3;
+                const opacity = 1 - progress * 0.2;
+                flyingEl.style.transform = `translate(-50%, -50%) scale(${scale})`;
+                flyingEl.style.opacity = opacity;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // Cleanup
+                    if (trailInterval) clearInterval(trailInterval);
+                    flyingEl.remove();
+                    if (onComplete) onComplete();
+                }
+            }
+            
+            requestAnimationFrame(animate);
+        }
+        
+        function createTrailParticle(parent, colorClass, isBright) {
+            const rect = parent.getBoundingClientRect();
+            const trail = document.createElement('div');
+            trail.className = `flying-trail ${colorClass}${isBright ? '' : ' muted'}`;
+            trail.style.left = (rect.left + rect.width / 2) + 'px';
+            trail.style.top = (rect.top + rect.height / 2) + 'px';
+            document.body.appendChild(trail);
+            
+            trail.animate([
+                { opacity: 1, transform: 'scale(1)' },
+                { opacity: 0, transform: 'scale(0)' }
+            ], {
+                duration: 300,
+                easing: 'ease-out'
+            }).onfinish = () => trail.remove();
+        }
+        
+        // Bezier curve helper
+        function quadraticBezier(p0, p1, p2, t) {
+            return (1 - t) * (1 - t) * p0 + 2 * (1 - t) * t * p1 + t * t * p2;
+        }
+        
+        // Easing function
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        // ==================== ANIMATE INDIVIDUAL SPELL CIRCLE ====================
+        function animateSpellCircle(spellName, increment, isBright) {
+            const { circle, stroke, progress } = spellElements[spellName];
+            const color = SPELL_COLORS[spellName];
+            
+            // Current and new progress
+            const currentProgress = spellProgress[spellName];
+            const newProgress = Math.min(currentProgress + increment, 100);
+            
+            // Apply glow class
+            const glowClass = isBright ? 'glowing-bright' : 'glowing-dim';
+            circle.classList.add(glowClass);
+            
+            // Update stroke (animate to new progress)
+            const newOffset = CIRCUMFERENCE * (1 - newProgress / 100);
+            stroke.style.strokeDashoffset = newOffset;
+            
+            // Apply muted class for wrong answers
+            if (!isBright) {
+                stroke.classList.add('muted');
+            } else {
+                stroke.classList.remove('muted');
+            }
+            
+            // Show progress text (above the circle)
+            progress.textContent = `+${increment}%`;
+            progress.style.opacity = '1';
+            progress.style.color = isBright ? color : '#AAA';
+            progress.classList.add('visible');
+            
+            // Create particles
+            const particleCount = isBright ? 10 : 5;
+            createParticleBurst(circle, color, particleCount, !isBright);
+            
+            // Play tones (musical notes for each spell)
+            const toneIndex = ['rapidFire', 'magicMissile', 'scatterShot'].indexOf(spellName);
+            const notes = isBright ? ['C4', 'E4', 'G4'] : ['C3', 'E3', 'G3'];
+            playTone(notes[toneIndex]);
+            playSound('whoosh');
+            
+            // Update progress value
+            spellProgress[spellName] = newProgress;
+            
+            // Cleanup after animation - FASTER cleanup
+            const cleanupDelay = isFastMode() ? 100 : 200;
+            setTimeout(() => {
+                circle.classList.remove(glowClass);
+                progress.style.opacity = '0';
+                progress.classList.remove('visible');
+                
+                // Afterglow effect (shorter - 500ms)
+                circle.classList.add('just-updated');
+                setTimeout(() => circle.classList.remove('just-updated'), 500);
+                
+                // Update circle state
+                updateCircleState(spellName, newProgress);
+                
+                // Check if unlocked
+                if (newProgress >= 100 && currentProgress < 100) {
+                    unlockSpell(circle, spellName, color);
+                }
+                
+                playSound('ting');
+            }, cleanupDelay);
+        }
+
+        // ==================== UPDATE CIRCLE STATE ====================
+        function updateCircleState(spellName, progress) {
+            const { circle } = spellElements[spellName];
+            
+            circle.classList.remove('empty', 'partial', 'unlocked');
+            
+            if (progress >= 100) {
+                circle.classList.add('unlocked');
+            } else if (progress > 0) {
+                circle.classList.add('partial');
+            } else {
+                circle.classList.add('empty');
+            }
+        }
+
+        // ==================== UNLOCK SPELL ====================
+        function unlockSpell(circle, spellName, color) {
+            // Large celebration pulse
+            circle.style.transform = 'scale(1.4)';
+            setTimeout(() => {
+                circle.style.transform = '';
+            }, 600);
+            
+            // Big particle burst
+            createParticleBurst(circle, color, 30, false);
+            
+            // Show unlocked text
+            const unlockText = document.createElement('div');
+            unlockText.textContent = 'READY!';
+            unlockText.style.cssText = `
+                position: absolute;
+                top: -25px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 11px;
+                font-weight: bold;
+                color: ${color};
+                text-shadow: 0 0 6px ${color};
+                animation: float-up-fade 1s ease-out forwards;
+                white-space: nowrap;
+                z-index: 200;
+            `;
+            circle.appendChild(unlockText);
+            setTimeout(() => unlockText.remove(), 1000);
+            
+            // Character celebration
+            triggerCharacterCelebration();
+            
+            playSound('spell-unlocked');
+        }
+
+        // ==================== CHARACTER CELEBRATION ====================
+        function triggerCharacterCelebration() {
+            avatarContainer.classList.add('celebrating');
+            setTimeout(() => avatarContainer.classList.remove('celebrating'), 600);
+
+            const emotes = ['✨', '🌟', '💫', '⭐', '🎉'];
+            emoteBubble.textContent = emotes[Math.floor(Math.random() * emotes.length)];
+            emoteBubble.classList.add('animate');
+            setTimeout(() => emoteBubble.classList.remove('animate'), 800);
+
+            // Update score
+            score++;
+        }
+
+        // ==================== PARTICLE EFFECTS ====================
+        function createParticleBurst(element, color, count, isMuted) {
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'spell-particle';
+
+                const particleColor = isMuted ? '#999' : color;
+                particle.style.background = particleColor;
+                particle.style.boxShadow = isMuted ? 'none' : `0 0 4px ${color}`;
+                particle.style.width = (3 + Math.random() * 3) + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.left = centerX + 'px';
+                particle.style.top = centerY + 'px';
+                particle.style.zIndex = '200';
+
+                const angle = (Math.random() * 360) * Math.PI / 180;
+                const distance = 15 + Math.random() * 25;
+                particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), 500);
+            }
+        }
+
+        function createConfetti(sourceElement, count) {
+            const rect = sourceElement.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const colors = ['#FFD700', '#FFFFFF', '#9B59B6', '#00CED1', '#FF69B4', '#00FF88'];
+
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.position = 'fixed';
+                confetti.style.width = (6 + Math.random() * 10) + 'px';
+                confetti.style.height = confetti.style.width;
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.left = centerX + 'px';
+                confetti.style.top = centerY + 'px';
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                confetti.style.pointerEvents = 'none';
+                confetti.style.zIndex = '500';
+
+                confettiContainer.appendChild(confetti);
+
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = 150 + Math.random() * 200;
+                const tx = Math.cos(angle) * velocity;
+                const ty = Math.sin(angle) * velocity - 150;
+                const rotation = Math.random() * 720 - 360;
+
+                confetti.animate([
+                    { opacity: 1, transform: 'translate(0, 0) rotate(0deg) scale(1)' },
+                    { opacity: 0.8, transform: `translate(${tx * 0.5}px, ${ty * 0.5}px) rotate(${rotation * 0.5}deg) scale(0.8)`, offset: 0.5 },
+                    { opacity: 0, transform: `translate(${tx}px, ${ty}px) rotate(${rotation}deg) scale(0.2)` }
+                ], {
+                    duration: 900 + Math.random() * 400, // Longer duration
+                    easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                    fill: 'forwards'
+                }).onfinish = () => confetti.remove();
+            }
+        }
+
+        // ==================== HELPER FUNCTIONS ====================
+        function enableCards() {
+            cards.forEach(card => {
+                card.classList.remove('disabled', 'selected-correct', 'selected-wrong');
+            });
+        }
+
+        function isFastMode() {
+            return document.getElementById('fast-toggle').checked;
+        }
+
+        // ==================== SOUND SYSTEM (Stubs) ====================
+        function playSound(soundName) {
+            console.log('🔊 Sound:', soundName);
+            // Implement with Web Audio API or Howler.js
+        }
+
+        function playTone(note) {
+            console.log('🎵 Tone:', note);
+            // Implement with Web Audio API
+        }
+
+        // ==================== DEMO FUNCTIONS ====================
+        function triggerCorrect() {
+            if (isAnimating) return;
+            const correctCard = document.querySelector('[data-correct="true"]');
+            handleCardClick(correctCard);
+        }
+
+        function triggerWrong() {
+            if (isAnimating) return;
+            const wrongCard = document.querySelector('[data-correct="false"]');
+            handleCardClick(wrongCard);
+        }
+
+        function fillTo90() {
+            if (isAnimating) return;
+            
+            ['magicMissile', 'scatterShot', 'rapidFire'].forEach(spellName => {
+                spellProgress[spellName] = 90;
+                const { stroke } = spellElements[spellName];
+                const offset = CIRCUMFERENCE * (1 - 90 / 100);
+                stroke.style.strokeDashoffset = offset;
+                updateCircleState(spellName, 90);
+            });
+        }
+
+        function resetAll() {
+            if (isAnimating) return;
+            
+            ['magicMissile', 'scatterShot', 'rapidFire'].forEach(spellName => {
+                spellProgress[spellName] = 0;
+                const { circle, stroke, progress } = spellElements[spellName];
+                stroke.style.strokeDashoffset = CIRCUMFERENCE;
+                stroke.classList.remove('muted');
+                progress.style.opacity = '0';
+                circle.classList.remove('receiving-reward');
+                updateCircleState(spellName, 0);
+            });
+            
+            enableCards();
+            score = 0;
+            confettiContainer.innerHTML = '';
+            isAnimating = false;
+            lastClickedCard = null;
+            
+            // Remove any flying elements
+            document.querySelectorAll('.flying-reward, .flying-trail').forEach(el => el.remove());
+        }
+
+        // ==================== KEYBOARD SHORTCUTS ====================
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '1') handleCardClick(cards[0]);
+            if (e.key === '2') handleCardClick(cards[1]);
+            if (e.key === '3') handleCardClick(cards[2]);
+            if (e.key === '4') handleCardClick(cards[3]);
+            if (e.key === 'r' || e.key === 'R') resetAll();
+            if (e.key === 'c' || e.key === 'C') triggerCorrect();
+            if (e.key === 'w' || e.key === 'W') triggerWrong();
+            if (e.key === 'Escape') window.location.href = 'index.html';
+        });
+
+        // ==================== INIT ====================
+        console.log('🎮 Wayarena Spell HUD Loaded!');
+        console.log('Keys: 1-4 select cards, C=correct, W=wrong, R=reset');
+    </script>
+</body>
+</html>
