@@ -296,37 +296,35 @@
 
     .rank-1 .stun-count {
       font-size: 14px;
-      color: #39ff14;
     }
 
     .accuracy {
       font-family: 'Press Start 2P', cursive;
       font-size: 12px;
-      color: #ff3d7f;
+      color: #ffd700;
       text-align: right;
     }
 
     .rank-1 .accuracy {
       font-size: 14px;
-      color: #ffd700;
     }
 
     /* Awards Banner - Integrated with leaderboard style */
     .awards-banner {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       justify-content: flex-start;
-      gap: 15px;
+      gap: 12px;
       margin: 20px 0 15px 0;
-      padding: 14px 20px;
+      padding: 8px 16px;
       background: rgba(45, 14, 45, 0.8);
       border: 2px solid rgba(212, 169, 106, 0.3);
       border-radius: 10px;
     }
 
     .award-badge {
-      width: 45px;
-      height: 45px;
+      width: 60px;
+      height: 60px;
       background: url('badge.png') no-repeat center center;
       background-size: contain;
       flex-shrink: 0;
@@ -367,14 +365,6 @@
     /* Highlight for top accuracy player in leaderboard */
     .leaderboard-row.top-accuracy .accuracy {
       color: #39ff14;
-      position: relative;
-    }
-
-    .leaderboard-row.top-accuracy .accuracy::after {
-      content: '*';
-      color: #39ff14;
-      margin-left: 3px;
-      font-size: 10px;
     }
 
     /* Regular rows subtle styling */
