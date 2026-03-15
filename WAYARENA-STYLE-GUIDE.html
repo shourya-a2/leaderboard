@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WayArena UI Style Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       WAYARENA MASTER STYLE GUIDE
+       Version: 1.0
+       Last Updated: March 2026
+       
+       This is the single source of truth for all WayArena UI.
+       Copy the :root variables to any new file.
+       ============================================================ */
+
+    /* ============================================================
+       1. CSS VARIABLES - COPY THIS BLOCK TO ALL NEW FILES
+       ============================================================ */
+    :root {
+      /* ----- BRAND COLORS ----- */
+      --wa-gold-primary: #FFD700;           /* Primary accent - titles, highlights */
+      --wa-gold-sandy: #d4a96a;             /* Secondary gold - borders, subtle accents */
+      --wa-gold-light: #FFE9B0;             /* Light gold - titles on dark backgrounds */
+      --wa-gold-dark: #b8956c;              /* Dark gold - shadows, pressed states */
+      
+      /* ----- GAMEPLAY COLORS ----- */
+      --wa-health-pink: #FF69B4;            /* Health bars, health-related UI */
+      --wa-health-pink-dark: #D84990;       /* Health bar shadow/border */
+      --wa-mana-blue: #00BFFF;              /* Mana/spell energy */
+      --wa-mana-blue-dark: #0099CC;         /* Mana shadow/border */
+      
+      /* ----- FEEDBACK COLORS ----- */
+      --wa-success-green: #22C55E;          /* Correct answers, rank up, positive */
+      --wa-success-green-light: #66FF8A;    /* Success glow */
+      --wa-error-red: #FF4444;              /* Wrong answers, damage, negative */
+      --wa-error-red-dark: #CC0000;         /* Error shadow */
+      --wa-warning-orange: #FFA500;         /* Warnings, caution states */
+      
+      /* ----- BACKGROUND COLORS ----- */
+      --wa-bg-dark: #1a120a;                /* Darkest background */
+      --wa-bg-brown: rgba(45, 30, 20, 0.85);/* Panel backgrounds */
+      --wa-bg-brown-light: rgba(50, 35, 22, 0.9); /* Alternating rows */
+      --wa-bg-brown-dark: rgba(35, 22, 12, 0.9);  /* Alternating rows */
+      --wa-bg-overlay: linear-gradient(180deg, rgba(30, 18, 10, 0.75) 0%, rgba(50, 30, 15, 0.85) 50%, rgba(30, 18, 10, 0.9) 100%);
+      
+      /* ----- TEXT COLORS ----- */
+      --wa-text-primary: #FFFFFF;           /* Primary text */
+      --wa-text-secondary: rgba(255, 255, 255, 0.7); /* Secondary/muted text */
+      --wa-text-disabled: rgba(255, 255, 255, 0.4);  /* Disabled text */
+      --wa-text-dark: #1a120a;              /* Text on light backgrounds */
+      
+      /* ----- BORDER COLORS ----- */
+      --wa-border-gold: rgba(212, 169, 106, 0.3);   /* Subtle gold border */
+      --wa-border-gold-strong: rgba(212, 169, 106, 0.6); /* Stronger gold border */
+      --wa-border-light: rgba(255, 255, 255, 0.12); /* Subtle white border */
+      
+      /* ----- RANK COLORS ----- */
+      --wa-rank-1-bg: linear-gradient(135deg, #3d2a00 0%, #4a3200 50%, #3d2a00 100%);
+      --wa-rank-1-border: #d4a96a;
+      --wa-rank-2-bg: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 50%, #2a2a2a 100%);
+      --wa-rank-2-border: #808080;
+      --wa-rank-3-bg: linear-gradient(135deg, #3d2615 0%, #4a2d1a 50%, #3d2615 100%);
+      --wa-rank-3-border: #8b5a2b;
+      
+      /* ----- EMBER/PARTICLE COLORS ----- */
+      --wa-ember-gold: #ffd700;
+      --wa-ember-orange: #ff8c00;
+      --wa-ember-red: #ff6600;
+      
+      /* ----- TYPOGRAPHY ----- */
+      --wa-font-display: 'Press Start 2P', cursive;  /* Pixel font - headers, titles, labels */
+      --wa-font-body: 'Fredoka', sans-serif;         /* Rounded font - body, data, UI */
+      
+      /* Font Sizes */
+      --wa-text-xs: 8px;      /* Tiny labels, pixel font captions */
+      --wa-text-sm: 10px;     /* Small labels, pixel font */
+      --wa-text-md: 12px;     /* Default pixel font */
+      --wa-text-lg: 14px;     /* Large pixel font */
+      --wa-text-xl: 18px;     /* Body text default */
+      --wa-text-2xl: 22px;    /* Body text large */
+      --wa-text-3xl: 28px;    /* Headings */
+      --wa-text-4xl: 36px;    /* Large headings */
+      --wa-text-5xl: 48px;    /* Hero titles */
+      
+      /* Font Weights (Fredoka) */
+      --wa-weight-normal: 400;
+      --wa-weight-medium: 500;
+      --wa-weight-semibold: 600;
+      --wa-weight-bold: 700;
+      
+      /* ----- SPACING ----- */
+      --wa-space-1: 4px;
+      --wa-space-2: 8px;
+      --wa-space-3: 12px;
+      --wa-space-4: 16px;
+      --wa-space-5: 20px;
+      --wa-space-6: 24px;
+      --wa-space-8: 32px;
+      --wa-space-10: 40px;
+      --wa-space-12: 48px;
+      
+      /* ----- BORDERS & RADIUS ----- */
+      --wa-radius-none: 0;            /* Pixel art style - sharp corners */
+      --wa-radius-sm: 4px;            /* Subtle rounding */
+      --wa-radius-md: 8px;            /* Cards, buttons */
+      --wa-radius-lg: 12px;           /* Panels */
+      --wa-radius-xl: 16px;           /* Large panels */
+      --wa-radius-full: 9999px;       /* Pills, circles */
+      
+      /* ----- SHADOWS ----- */
+      --wa-shadow-pixel: 4px 4px 0 rgba(0, 0, 0, 0.4);          /* Pixel art shadow */
+      --wa-shadow-pixel-sm: 2px 2px 0 rgba(0, 0, 0, 0.3);       /* Small pixel shadow */
+      --wa-shadow-pixel-lg: 6px 6px 0 rgba(0, 0, 0, 0.5);       /* Large pixel shadow */
+      --wa-shadow-glow-gold: 0 0 20px rgba(255, 215, 0, 0.4);   /* Gold glow */
+      --wa-shadow-glow-green: 0 0 20px rgba(34, 197, 94, 0.4);  /* Green glow */
+      --wa-shadow-glow-pink: 0 0 20px rgba(255, 105, 180, 0.4); /* Pink glow */
+      
+      /* ----- TRANSITIONS ----- */
+      --wa-transition-fast: 0.1s ease;
+      --wa-transition-normal: 0.2s ease;
+      --wa-transition-slow: 0.3s ease;
+      --wa-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --wa-ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+      
+      /* ----- Z-INDEX SCALE ----- */
+      --wa-z-background: 0;
+      --wa-z-content: 1;
+      --wa-z-overlay: 10;
+      --wa-z-modal: 100;
+      --wa-z-tooltip: 200;
+      --wa-z-scanlines: 1000;
+    }
+
+    /* ============================================================
+       2. BASE STYLES
+       ============================================================ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--wa-font-body);
+      color: var(--wa-text-primary);
+      background: var(--wa-bg-dark);
+      line-height: 1.5;
+    }
+
+    /* ============================================================
+       STYLE GUIDE DOCUMENT STYLES (not for production)
+       ============================================================ */
+    .style-guide {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .sg-header {
+      text-align: center;
+      margin-bottom: 60px;
+      padding-bottom: 40px;
+      border-bottom: 2px solid var(--wa-border-gold);
+    }
+
+    .sg-logo {
+      height: 80px;
+      margin-bottom: 20px;
+    }
+
+    .sg-title {
+      font-family: var(--wa-font-display);
+      font-size: var(--wa-text-lg);
+      color: var(--wa-gold-primary);
+      margin-bottom: 10px;
+      letter-spacing: 2px;
+    }
+
+    .sg-subtitle {
+      font-family: var(--wa-font-body);
+      font-size: var(--wa-text-xl);
+      color: var(--wa-text-secondary);
+    }
+
+    .sg-section {
+      margin-bottom: 60px;
+    }
+
+    .sg-section-title {
+      font-family: var(--wa-font-display);
+      font-size: var(--wa-text-sm);
+      color: var(--wa-gold-sandy);
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--wa-border-gold);
+      letter-spacing: 1px;
+    }
+
+    .sg-subsection {
+      margin-bottom: 32px;
+    }
+
+    .sg-subsection-title {
+      font-family: var(--wa-font-body);
+      font-size: var(--wa-text-2xl);
+      font-weight: var(--wa-weight-semibold);
+      color: var(--wa-text-primary);
+      margin-bottom: 16px;
+    }
+
+    .sg-description {
+      font-size: var(--wa-text-xl);
+      color: var(--wa-text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .sg-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 16px;
+    }
+
+    .sg-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .sg-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    /* Color Swatches */
+    .color-swatch {
+      border-radius: var(--wa-radius-md);
+      overflow: hidden;
+      border: 1px solid var(--wa-border-light);
+    }
+
+    .color-swatch-preview {
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .color-swatch-info {
+      padding: 12px;
+      background: var(--wa-bg-brown);
+    }
+
+    .color-swatch-name {
+      font-size: 14px;
+      font-weight: var(--wa-weight-semibold);
+      margin-bottom: 4px;
+    }
+
+    .color-swatch-value {
+      font-size: 12px;
+      color: var(--wa-text-secondary);
+      font-family: monospace;
+    }
+
+    .color-swatch-var {
+      font-size: 11px;
+      color: var(--wa-gold-sandy);
+      font-family: monospace;
+      margin-top: 4px;
+    }
+
+    /* Typography Examples */
+    .type-example {
+      padding: 20px;
+      background: var(--wa-bg-brown);
+      border-radius: var(--wa-radius-md);
+      margin-bottom: 12px;
+    }
+
+    .type-label {
+      font-size: 12px;
+      color: var(--wa-gold-sandy);
+      margin-bottom: 8px;
+      font-family: monospace;
+    }
+
+    /* Component Examples */
+    .component-demo {
+      padding: 24px;
+      background: var(--wa-bg-brown);
+      border-radius: var(--wa-radius-md);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .component-demo-dark {
+      background: var(--wa-bg-dark);
+      border: 1px solid var(--wa-border-gold);
+    }
+
+    /* Code Block */
+    .code-block {
+      background: #0d0d0d;
+      border: 1px solid var(--wa-border-gold);
+      border-radius: var(--wa-radius-md);
+      padding: 16px;
+      overflow-x: auto;
+      margin-top: 16px;
+    }
+
+    .code-block code {
+      font-family: 'Monaco', 'Consolas', monospace;
+      font-size: 13px;
+      color: var(--wa-gold-light);
+      white-space: pre;
+    }
+
+    /* ============================================================
+       3. COMPONENT STYLES - USE THESE IN PRODUCTION
+       ============================================================ */
+
+    /* ----- BUTTONS ----- */
+    .wa-btn {
+      font-family: var(--wa-font-display);
+      font-size: var(--wa-text-sm);
+      padding: 14px 28px;
+      border: none;
+      cursor: pointer;
+      transition: transform var(--wa-transition-fast), box-shadow var(--wa-transition-fast);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .wa-btn-primary {
+      color: var(--wa-text-dark);
+      background: linear-gradient(180deg, var(--wa-gold-primary) 0%, var(--wa-gold-sandy) 100%);
+      box-shadow: var(--wa-shadow-pixel);
+    }
+
+    .wa-btn-primary:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: var(--wa-shadow-pixel-lg);
+    }
+
+    .wa-btn-primary:active {
+      transform: translate(2px, 2px);
+      box-shadow: var(--wa-shadow-pixel-sm);
+    }
+
+    .wa-btn-secondary {
+      color: var(--wa-gold-sandy);
+      background: transparent;
+      border: 2px solid var(--wa-gold-sandy);
+      box-shadow: var(--wa-shadow-pixel-sm);
+    }
+
+    .wa-btn-secondary:hover {
+      background: rgba(212, 169, 106, 0.1);
+      transform: translate(-1px, -1px);
+    }
+
+    .wa-btn-danger {
+      color: var(--wa-text-primary);
+      background: linear-gradient(180deg, var(--wa-error-red) 0%, var(--wa-error-red-dark) 100%);
+      box-shadow: var(--wa-shadow-pixel);
+    }
+
+    .wa-btn-success {
+      color: var(--wa-text-dark);
+      background: linear-gradient(180deg, var(--wa-success-green) 0%, #1a9f4a 100%);
+      box-shadow: var(--wa-shadow-pixel);
+    }
+
+    /* ----- CARDS / PANELS ----- */
+    .wa-card {
+      background: var(--wa-bg-brown);
+      border: 2px solid var(--wa-border-gold);
+      border-radius: var(--wa-radius-none);
+      padding: var(--wa-space-6);
+      box-shadow: var(--wa-shadow-pixel);
+    }
+
+    .wa-card-header {
+      font-family: var(--wa-font-display);
+      font-size: var(--wa-text-sm);
+      color: var(--wa-gold-sandy);
+      margin-bottom: var(--wa-space-4);
+      letter-spacing: 1px;
+    }
+
+    .wa-card-body {
+      font-family: var(--wa-font-body);
+      font-size: var(--wa-text-xl);
+    }
+
+    /* ----- BADGES ----- */
+    .wa-badge {
+      display: inline-block;
+      font-family: var(--wa-font-display);
+      font-size: var(--wa-text-xs);
+      padding: 4px 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .wa-badge-gold {
+      background: var(--wa-gold-primary);
+      color: var(--wa-text-dark);
+    }
+
+    .wa-badge-success {
+      background: var(--wa-success-green);
+      color: var(--wa-text-dark);
+    }
+
+    .wa-badge-error {
+      background: var(--wa-error-red);
+      color: var(--wa-text-primary);
+    }
+
+    .wa-badge-outline {
+      background: transparent;
+      border: 1px solid var(--wa-gold-sandy);
+      color: var(--wa-gold-sandy);
+    }
+
+    /* ----- TAGS ----- */
+    .wa-tag {
+      display: inline-block;
+      font-family: var(--wa-font-display);
+      font-size: var(--wa-text-xs);
+      padding: 3px 6px;
+      background: var(--wa-gold-sandy);
+      color: var(--wa-text-dark);
+    }
+
+    /* ----- LEADERBOARD ROW ----- */
+    .wa-leaderboard-row {
+      display: grid;
+      grid-template-columns: 60px 1fr 80px 80px;
+      align-items: center;
+      padding: 14px 18px;
+      background: var(--wa-bg-brown);
+      border-bottom: 1px solid var(--wa-border-gold);
+    }
+
+    .wa-leaderboard-row.rank-1 {
+      background: var(--wa-rank-1-bg);
+      border: 1px solid var(--wa-rank-1-border);
+    }
+
+    .wa-leaderboard-row.rank-2 {
+      background: var(--wa-rank-2-bg);
+      border-bottom: 1px solid var(--wa-rank-2-border);
+    }
+
+    .wa-leaderboard-row.rank-3 {
+      background: var(--wa-rank-3-bg);
+      border-bottom: 1px solid var(--wa-rank-3-border);
+    }
+
+    .wa-leaderboard-row .rank {
+      font-family: var(--wa-font-body);
+      font-size: var(--wa-text-xl);
+      font-weight: var(--wa-weight-bold);
+      text-align: center;
+    }
+
+    .wa-leaderboard-row .name {
+      font-family: var(--wa-font-body);
+      font-size: var(--wa-text-xl);
+      font-weight: var(--wa-weight-semibold);
+    }
+
+    .wa-leaderboard-row .score {
+      font-family: var(--wa-font-body);
+      font-size: var(--wa-text-xl);
+      font-weight: var(--wa-weight-semibold);
+      text-align: right;
+      color: var(--wa-text-primary);
+    }
+
+    /* ----- PROGRESS BARS ----- */
+    .wa-progress {
+      height: 20px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: var(--wa-radius-full);
+      overflow: hidden;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .wa-progress-bar {
+      height: 100%;
+      border-radius: var(--wa-radius-full);
+      transition: width 0.3s var(--wa-ease-smooth);
+    }
+
+    .wa-progress-health .wa-progress-bar {
+      background: linear-gradient(90deg, var(--wa-health-pink-dark), var(--wa-health-pink));
+      box-shadow: 0 0 10px var(--wa-health-pink);
+    }
+
+    .wa-progress-mana .wa-progress-bar {
+      background: linear-gradient(90deg, var(--wa-mana-blue-dark), var(--wa-mana-blue));
+      box-shadow: 0 0 10px var(--wa-mana-blue);
+    }
+
+    /* ----- STAT CHIPS ----- */
+    .wa-stat-chip {
+      font-family: var(--wa-font-body);
+      padding: 12px 16px;
+      background: var(--wa-bg-brown-dark);
+      border: 2px solid var(--wa-border-gold);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .wa-stat-chip .label {
+      font-size: 11px;
+      font-weight: var(--wa-weight-medium);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--wa-text-secondary);
+    }
+
+    .wa-stat-chip .value {
+      font-size: var(--wa-text-2xl);
+      font-weight: var(--wa-weight-bold);
+      color: var(--wa-text-primary);
+    }
+
+    /* ============================================================
+       4. EFFECTS & ANIMATIONS
+       ============================================================ */
+
+    /* CRT Scanlines - Add to body::after */
+    .wa-scanlines::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.03) 0px,
+        rgba(0, 0, 0, 0.03) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      pointer-events: none;
+      z-index: var(--wa-z-scanlines);
+    }
+
+    /* Pixel Stars */
+    .wa-pixel-star {
+      width: 4px;
+      height: 4px;
+      background: var(--wa-gold-primary);
+      position: absolute;
+      animation: starTwinkle 2s ease-in-out infinite;
+    }
+
+    .wa-pixel-star::before,
+    .wa-pixel-star::after {
+      content: '';
+      position: absolute;
+      background: var(--wa-gold-primary);
+    }
+
+    .wa-pixel-star::before {
+      width: 4px;
+      height: 4px;
+      top: -4px;
+      left: 0;
+    }
+
+    .wa-pixel-star::after {
+      width: 4px;
+      height: 4px;
+      top: 4px;
+      left: 0;
+    }
+
+    @keyframes starTwinkle {
+      0%, 100% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Rising Embers */
+    @keyframes rise {
+      0% {
+        bottom: -20px;
+        opacity: 0;
+        transform: translateX(0) scale(1);
+      }
+      5% { opacity: 0.9; }
+      20% { opacity: 1; transform: translateX(20px) scale(1); }
+      40% { opacity: 0.95; transform: translateX(-20px) scale(0.9); }
+      60% { opacity: 0.8; transform: translateX(15px) scale(0.8); }
+      80% { opacity: 0.5; transform: translateX(-10px) scale(0.6); }
+      100% {
+        bottom: 100%;
+        opacity: 0;
+        transform: translateX(10px) scale(0.3);
+      }
+    }
+
+    /* Bounce In */
+    @keyframes bounceIn {
+      0% { opacity: 0; transform: scale(0.5); }
+      60% { transform: scale(1.05); }
+      80% { transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Slide Up */
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Row Slide In */
+    @keyframes rowSlideIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Gold Pulse (subtle) */
+    @keyframes goldPulse {
+      0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.2); }
+      50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.4); }
+    }
+
+    /* ============================================================
+       5. UTILITY CLASSES
+       ============================================================ */
+    .wa-text-gold { color: var(--wa-gold-primary); }
+    .wa-text-sandy { color: var(--wa-gold-sandy); }
+    .wa-text-success { color: var(--wa-success-green); }
+    .wa-text-error { color: var(--wa-error-red); }
+    .wa-text-muted { color: var(--wa-text-secondary); }
+
+    .wa-font-pixel { font-family: var(--wa-font-display); }
+    .wa-font-body { font-family: var(--wa-font-body); }
+
+    .wa-shadow-pixel { box-shadow: var(--wa-shadow-pixel); }
+    .wa-shadow-glow-gold { box-shadow: var(--wa-shadow-glow-gold); }
+
+    .wa-animate-bounce { animation: bounceIn 0.6s var(--wa-ease-bounce); }
+    .wa-animate-slide-up { animation: slideUp 0.4s ease-out; }
+  </style>
+</head>
+<body>
+  <div class="style-guide">
+    <!-- Header -->
+    <header class="sg-header">
+      <img src="Wayarena logo.png" alt="WayArena" class="sg-logo">
+      <h1 class="sg-title">UI STYLE GUIDE</h1>
+      <p class="sg-subtitle">Version 1.0 — The single source of truth for all WayArena interfaces</p>
+    </header>
+
+    <!-- Section 1: Colors -->
+    <section class="sg-section">
+      <h2 class="sg-section-title">1. COLOR PALETTE</h2>
+      
+      <div class="sg-subsection">
+        <h3 class="sg-subsection-title">Brand Colors</h3>
+        <p class="sg-description">Primary gold tones that define WayArena's visual identity.</p>
+        <div class="sg-grid">
+          <div class="color-swatch">
+            <div class="color-swatch-preview" style="background: #FFD700;"></div>
+            <div class="color-swatch-info">
+              <div class="color-swatch-name">Gold Primary</div>
+              <div class="color-swatch-value">#FFD700</div>
+              <div class="color-swatch-var">--wa-gold-primary</div>
+            </div>
+          </div>
+          <div class="color-swatch">
+            <div class="color-swatch-preview" style="background: #d4a96a;"></div>
+            <div class="color-swatch-info">
+              <div class="color-swatch-name">Gold Sandy</div>
+              <div class="color-swatch-value">#d4a96a</div>
+              <div class="color-swatch-var">--wa-gold-sandy</div>
+            </div>
+          </div>
+          <div class="color-swatch">
+            <div class="color-swatch-preview" style="background: #FFE9B0;"></div>
+            <div class="color-swatch-info">
+              <div class="color-swatch-name">Gold Light</div>
+              <div class="color-swatch-value">#FFE9B0</div>
+              <div class="color-swatch-var">--wa-gold-light</div>
+            </div>
+          </div>
+          <div class="color-swatch">
+            <div class="color-swatch-preview" style="background: #b8956c;"></div>
+            <div class="color-swatch-info">
+              <div class="color-swatch-name">Gold Dark</div>
+              <div class="color-swatch-value">#b8956c</div>
+              <div class="color-swatch-var">--wa-gold-dark</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sg-subsection">
+        <h3 class="sg-subsection-title">Gameplay Colors</h3>
+        <p class="sg-description">Colors used for health, mana, and gameplay feedback.</p>
+        <div class="sg-grid">
+          <div class="color-swatch">
+            <div class="color-swatch-preview" style="background: #FF69B4;"></div>
+            <div class="color-swatch-info">
+              <div class="color-swatch-name">Health Pink</div>
+              <div class="color-swatch-value">#FF69B4</div>
+              <div class="color-swatch-var">--wa-health-pink</div>
+            </div>
+          </div>
+          <div class="color-swatch">
+            <div class="color-swatch-preview" style="background: #00BFFF;"></div>
+            <div class="color-swatch-info">
+              <div class="color-swatch-name">Mana Blue</div>
+              <div class="color-swatch-value">#00BFFF</div>
+              <div class="color-swatch-var">--wa-mana-blue</div>
+            </div>
+          </div>
+          <div class="color-swatch">
+            <div class="color-swatch-preview" style="background: #22C55E;"></div>
+            <div class="color-swatch-info">
+              <div class="color-swatch-name">Success Green</div>
+              <div class="color-swatch-value">#22C55E</div>
+              <div class="color-swatch-var">--wa-success-green</div>
+            </div>
+          </div>
+          <div class="color-swatch">
+            <div class="color-swatch-preview" style="background: #FF4444;"></div>
+            <div class="color-swatch-info">
+              <div class="color-swatch-name">Error Red</div>
+              <div class="color-swatch-value">#FF4444</div>
+              <div class="color-swatch-var">--wa-error-red</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sg-subsection">
+        <h3 class="sg-subsection-title">Background Colors</h3>
+        <p class="sg-description">Dark, warm brown tones for panels and overlays.</p>
+        <div class="sg-grid">
+          <div class="color-swatch">
+            <div class="color-swatch-preview" style="background: #1a120a;"></div>
+            <div class="color-swatch-info">
+              <div class="color-swatch-name">BG Dark</div>
+              <div class="color-swatch-value">#1a120a</div>
+              <div class="color-swatch-var">--wa-bg-dark</div>
+            </div>
+          </div>
+          <div class="color-swatch">
+            <div class="color-swatch-preview" style="background: rgba(45, 30, 20, 0.85);"></div>
+            <div class="color-swatch-info">
+              <div class="color-swatch-name">BG Brown</div>
+              <div class="color-swatch-value">rgba(45,30,20,0.85)</div>
+              <div class="color-swatch-var">--wa-bg-brown</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Typography -->
+    <section class="sg-section">
+      <h2 class="sg-section-title">2. TYPOGRAPHY</h2>
+      
+      <div class="sg-subsection">
+        <h3 class="sg-subsection-title">Font Families</h3>
+        <p class="sg-description">WayArena uses exactly TWO fonts for consistency.</p>
+        
+        <div class="type-example">
+          <div class="type-label">--wa-font-display: 'Press Start 2P'</div>
+          <p style="font-family: 'Press Start 2P'; font-size: 14px; color: var(--wa-gold-primary);">GAME OVER! LEADERBOARD</p>
+          <p style="font-family: 'Press Start 2P'; font-size: 10px; color: var(--wa-text-secondary); margin-top: 8px;">Use for: Headers, titles, labels, badges, buttons</p>
+        </div>
+        
+        <div class="type-example">
+          <div class="type-label">--wa-font-body: 'Fredoka'</div>
+          <p style="font-family: 'Fredoka'; font-size: 22px; font-weight: 600;">Player Names, Scores, Body Text</p>
+          <p style="font-family: 'Fredoka'; font-size: 18px; color: var(--wa-text-secondary); margin-top: 8px;">Use for: Player names, numbers, data, descriptions, UI content</p>
+        </div>
+      </div>
+
+      <div class="sg-subsection">
+        <h3 class="sg-subsection-title">Type Scale</h3>
+        <div class="type-example">
+          <div class="type-label">--wa-text-5xl: 48px (Hero titles)</div>
+          <p style="font-family: 'Press Start 2P'; font-size: 48px; color: var(--wa-gold-primary);">GAME OVER!</p>
+        </div>
+        <div class="type-example">
+          <div class="type-label">--wa-text-3xl: 28px (Headings)</div>
+          <p style="font-family: 'Press Start 2P'; font-size: 28px; color: var(--wa-gold-sandy);">LEADERBOARD</p>
+        </div>
+        <div class="type-example">
+          <div class="type-label">--wa-text-2xl: 22px (Large body)</div>
+          <p style="font-family: 'Fredoka'; font-size: 22px; font-weight: 600;">karararan — 30 Stuns</p>
+        </div>
+        <div class="type-example">
+          <div class="type-label">--wa-text-xl: 18px (Body default)</div>
+          <p style="font-family: 'Fredoka'; font-size: 18px;">Regular player names and content</p>
+        </div>
+        <div class="type-example">
+          <div class="type-label">--wa-text-sm: 10px (Pixel labels)</div>
+          <p style="font-family: 'Press Start 2P'; font-size: 10px; color: var(--wa-gold-sandy);">SHARPSHOOTER AWARD</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Components -->
+    <section class="sg-section">
+      <h2 class="sg-section-title">3. COMPONENTS</h2>
+      
+      <div class="sg-subsection">
+        <h3 class="sg-subsection-title">Buttons</h3>
+        <div class="component-demo component-demo-dark">
+          <button class="wa-btn wa-btn-primary">PLAY AGAIN</button>
+          <button class="wa-btn wa-btn-secondary">CANCEL</button>
+          <button class="wa-btn wa-btn-success">CORRECT</button>
+          <button class="wa-btn wa-btn-danger">WRONG</button>
+        </div>
+        <div class="code-block">
+          <code>&lt;button class="wa-btn wa-btn-primary"&gt;PLAY AGAIN&lt;/button&gt;
+&lt;button class="wa-btn wa-btn-secondary"&gt;CANCEL&lt;/button&gt;
+&lt;button class="wa-btn wa-btn-success"&gt;CORRECT&lt;/button&gt;
+&lt;button class="wa-btn wa-btn-danger"&gt;WRONG&lt;/button&gt;</code>
+        </div>
+      </div>
+
+      <div class="sg-subsection">
+        <h3 class="sg-subsection-title">Badges & Tags</h3>
+        <div class="component-demo component-demo-dark">
+          <span class="wa-badge wa-badge-gold">1ST PLACE</span>
+          <span class="wa-badge wa-badge-success">+5 STUNS</span>
+          <span class="wa-badge wa-badge-error">-10 HP</span>
+          <span class="wa-badge wa-badge-outline">SHARPSHOOTER</span>
+          <span class="wa-tag">YOU</span>
+        </div>
+      </div>
+
+      <div class="sg-subsection">
+        <h3 class="sg-subsection-title">Cards / Panels</h3>
+        <div class="sg-grid-2">
+          <div class="wa-card">
+            <div class="wa-card-header">SHARPSHOOTER</div>
+            <div class="wa-card-body">
+              <p style="font-size: 22px; font-weight: 700; margin-bottom: 8px;">Sanskar</p>
+              <p style="font-size: 28px; color: var(--wa-gold-sandy);">94% Accuracy</p>
+            </div>
+          </div>
+          <div class="wa-card">
+            <div class="wa-card-header">YOUR STATS</div>
+            <div class="wa-card-body">
+              <div class="wa-stat-chip" style="margin-bottom: 8px;">
+                <span class="label">Your Stuns</span>
+                <span class="value">30</span>
+              </div>
+              <div class="wa-stat-chip">
+                <span class="label">Got Stunned</span>
+                <span class="value">14</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sg-subsection">
+        <h3 class="sg-subsection-title">Leaderboard Rows</h3>
+        <div style="max-width: 600px;">
+          <div class="wa-leaderboard-row rank-1">
+            <span class="rank">👑 1</span>
+            <span class="name">karararan</span>
+            <span class="score">30</span>
+            <span class="score" style="color: var(--wa-text-secondary);">88%</span>
+          </div>
+          <div class="wa-leaderboard-row rank-2">
+            <span class="rank">2</span>
+            <span class="name">Sanskar</span>
+            <span class="score">21</span>
+            <span class="score" style="color: var(--wa-text-secondary);">94%</span>
+          </div>
+          <div class="wa-leaderboard-row rank-3">
+            <span class="rank">3</span>
+            <span class="name">ANKITG X DEEPAKC</span>
+            <span class="score">11</span>
+            <span class="score" style="color: var(--wa-text-secondary);">72%</span>
+          </div>
+          <div class="wa-leaderboard-row">
+            <span class="rank">4</span>
+            <span class="name"><span class="wa-tag">YOU</span> Shourya</span>
+            <span class="score">8</span>
+            <span class="score" style="color: var(--wa-text-secondary);">65%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sg-subsection">
+        <h3 class="sg-subsection-title">Progress Bars</h3>
+        <div class="component-demo component-demo-dark" style="flex-direction: column; gap: 16px;">
+          <div style="width: 100%; max-width: 300px;">
+            <p style="font-size: 12px; margin-bottom: 8px; color: var(--wa-health-pink);">HEALTH</p>
+            <div class="wa-progress wa-progress-health">
+              <div class="wa-progress-bar" style="width: 75%;"></div>
+            </div>
+          </div>
+          <div style="width: 100%; max-width: 300px;">
+            <p style="font-size: 12px; margin-bottom: 8px; color: var(--wa-mana-blue);">MANA</p>
+            <div class="wa-progress wa-progress-mana">
+              <div class="wa-progress-bar" style="width: 50%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Effects -->
+    <section class="sg-section">
+      <h2 class="sg-section-title">4. EFFECTS & ANIMATIONS</h2>
+      
+      <div class="sg-subsection">
+        <h3 class="sg-subsection-title">Shadows</h3>
+        <div class="component-demo component-demo-dark">
+          <div style="width: 100px; height: 60px; background: var(--wa-gold-sandy); box-shadow: var(--wa-shadow-pixel-sm); display: flex; align-items: center; justify-content: center; font-size: 10px;">Pixel SM</div>
+          <div style="width: 100px; height: 60px; background: var(--wa-gold-sandy); box-shadow: var(--wa-shadow-pixel); display: flex; align-items: center; justify-content: center; font-size: 10px;">Pixel</div>
+          <div style="width: 100px; height: 60px; background: var(--wa-gold-sandy); box-shadow: var(--wa-shadow-pixel-lg); display: flex; align-items: center; justify-content: center; font-size: 10px;">Pixel LG</div>
+          <div style="width: 100px; height: 60px; background: var(--wa-bg-brown); border: 2px solid var(--wa-gold-sandy); box-shadow: var(--wa-shadow-glow-gold); display: flex; align-items: center; justify-content: center; font-size: 10px; color: var(--wa-gold-sandy);">Glow Gold</div>
+        </div>
+      </div>
+
+      <div class="sg-subsection">
+        <h3 class="sg-subsection-title">Decorative Effects</h3>
+        <p class="sg-description">Use these for celebratory screens (game over, victories).</p>
+        <ul style="list-style: none; padding-left: 0;">
+          <li style="padding: 8px 0; border-bottom: 1px solid var(--wa-border-gold);">
+            <strong>CRT Scanlines</strong> — Subtle horizontal lines overlay (body::after)
+          </li>
+          <li style="padding: 8px 0; border-bottom: 1px solid var(--wa-border-gold);">
+            <strong>Rising Embers</strong> — Gold/orange pixel particles rising from bottom
+          </li>
+          <li style="padding: 8px 0; border-bottom: 1px solid var(--wa-border-gold);">
+            <strong>Pixel Stars</strong> — Twinkling star decorations using ::before/::after
+          </li>
+          <li style="padding: 8px 0;">
+            <strong>Gold Pulse</strong> — Subtle glow animation for 1st place highlighting
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Section 5: Usage Guidelines -->
+    <section class="sg-section">
+      <h2 class="sg-section-title">5. USAGE GUIDELINES</h2>
+      
+      <div class="sg-subsection">
+        <h3 class="sg-subsection-title">DO</h3>
+        <ul style="list-style: none; padding-left: 0; color: var(--wa-success-green);">
+          <li style="padding: 8px 0;">✓ Copy the :root CSS variables block to every new file</li>
+          <li style="padding: 8px 0;">✓ Use Press Start 2P for headers and labels only</li>
+          <li style="padding: 8px 0;">✓ Use Fredoka for all readable content (names, numbers, descriptions)</li>
+          <li style="padding: 8px 0;">✓ Use pixel shadows (hard-edged) for the retro feel</li>
+          <li style="padding: 8px 0;">✓ Keep corners sharp (border-radius: 0) for pixel art aesthetic</li>
+          <li style="padding: 8px 0;">✓ Use the defined color palette — no custom colors</li>
+        </ul>
+      </div>
+
+      <div class="sg-subsection">
+        <h3 class="sg-subsection-title">DON'T</h3>
+        <ul style="list-style: none; padding-left: 0; color: var(--wa-error-red);">
+          <li style="padding: 8px 0;">✗ Don't use Inter, Quicksand, Segoe UI, or other fonts</li>
+          <li style="padding: 8px 0;">✗ Don't use blur shadows (use pixel shadows instead)</li>
+          <li style="padding: 8px 0;">✗ Don't add new colors without updating this guide</li>
+          <li style="padding: 8px 0;">✗ Don't mix purple-tinted and brown-tinted backgrounds</li>
+          <li style="padding: 8px 0;">✗ Don't use rounded corners for main containers</li>
+        </ul>
+      </div>
+
+      <div class="sg-subsection">
+        <h3 class="sg-subsection-title">Quick Start Template</h3>
+        <p class="sg-description">Copy this to start any new WayArena HTML file:</p>
+        <div class="code-block">
+          <code>&lt;!DOCTYPE html&gt;
+&lt;html lang="en"&gt;
+&lt;head&gt;
+  &lt;meta charset="UTF-8"&gt;
+  &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+  &lt;title&gt;WayArena - [Screen Name]&lt;/title&gt;
+  &lt;link rel="preconnect" href="https://fonts.googleapis.com"&gt;
+  &lt;link rel="preconnect" href="https://fonts.gstatic.com" crossorigin&gt;
+  &lt;link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet"&gt;
+  &lt;style&gt;
+    /* Paste the full :root block from WAYARENA-STYLE-GUIDE.html here */
+  &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+  &lt;!-- Your content --&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="text-align: center; padding: 40px 0; border-top: 1px solid var(--wa-border-gold); color: var(--wa-text-secondary);">
+      <p style="font-family: var(--wa-font-display); font-size: 8px; color: var(--wa-gold-sandy);">WAYARENA STYLE GUIDE v1.0</p>
+      <p style="margin-top: 8px; font-size: 14px;">Keep this file updated as the design evolves.</p>
+    </footer>
+  </div>
+</body>
+</html>
+</code>

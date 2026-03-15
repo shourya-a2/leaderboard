@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WayArena - Teacher Flow Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Quicksand:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #FFD700;
+      --gold-dark: #b8860b;
+      --gold-accent: #d4a96a;
+      --brown-dark: #1a120a;
+      --text-primary: #f0f0f0;
+      --button-pink: #e91e8c;
+      --font-pixel: 'Press Start 2P', cursive;
+      --font-body: 'Quicksand', sans-serif;
+      --font-ui: 'Inter', sans-serif;
+      --screen-width: 1280px;
+      --screen-height: 720px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: #0a0a0a;
+      color: var(--text-primary);
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h1 {
+      font-family: var(--font-pixel);
+      font-size: 24px;
+      color: var(--gold);
+      text-shadow: 2px 2px 0 var(--gold-dark);
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .subtitle {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 14px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .prototype-container {
+      width: var(--screen-width);
+      height: var(--screen-height);
+      position: relative;
+      overflow: hidden;
+      border-radius: 8px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+
+    .screen.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Figma Screenshot Screens */
+    .figma-screen {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    .figma-screen img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Clickable hotspot overlay */
+    .hotspot {
+      position: absolute;
+      cursor: pointer;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hotspot:hover {
+      border-color: var(--button-pink);
+      background: rgba(233, 30, 140, 0.2);
+      box-shadow: 0 0 20px rgba(233, 30, 140, 0.4);
+    }
+
+    .hotspot-label {
+      background: var(--button-pink);
+      color: white;
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 4px;
+      opacity: 0;
+      transform: translateY(5px);
+      transition: all 0.2s ease;
+      pointer-events: none;
+    }
+
+    .hotspot:hover .hotspot-label {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Flow Indicator */
+    .flow-indicator {
+      display: flex;
+      gap: 12px;
+      padding: 16px 24px;
+      background: rgba(30, 20, 10, 0.95);
+      border-radius: 30px;
+      margin-top: 20px;
+      border: 1px solid rgba(212, 169, 106, 0.3);
+    }
+
+    .flow-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-ui);
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.4);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+
+    .flow-step:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .flow-step.active {
+      color: var(--gold);
+      background: rgba(255, 215, 0, 0.1);
+    }
+
+    .flow-step.completed {
+      color: #66FF8A;
+    }
+
+    .flow-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .flow-step.active .flow-dot {
+      background: var(--gold);
+      box-shadow: 0 0 10px var(--gold);
+    }
+
+    .flow-step.completed .flow-dot {
+      background: #66FF8A;
+    }
+
+    .flow-arrow {
+      color: rgba(255, 255, 255, 0.2);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* Screen label overlay */
+    .screen-label {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: rgba(0, 0, 0, 0.8);
+      color: var(--gold);
+      font-family: var(--font-pixel);
+      font-size: 10px;
+      padding: 8px 16px;
+      border-radius: 4px;
+      z-index: 100;
+      border: 1px solid rgba(212, 169, 106, 0.3);
+    }
+
+    /* Keyboard hint */
+    .keyboard-hint {
+      margin-top: 15px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.4);
+      text-align: center;
+    }
+
+    .keyboard-hint kbd {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: var(--font-ui);
+      margin: 0 4px;
+    }
+
+    /* ===== SCREEN 4: LEADERBOARD (HTML Version) ===== */
+    #screen-leaderboard {
+      background: url('arena-bg.png') center center / cover no-repeat fixed;
+      background-color: var(--brown-dark);
+    }
+
+    #screen-leaderboard::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(30, 18, 10, 0.75) 0%, rgba(50, 30, 15, 0.85) 50%, rgba(30, 18, 10, 0.9) 100%);
+      pointer-events: none;
+    }
+
+    #screen-leaderboard::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.03) 0px, rgba(0, 0, 0, 0.03) 1px, transparent 1px, transparent 3px);
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .leaderboard-content {
+      position: relative;
+      z-index: 10;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 30px 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .lb-logo {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      height: 50px;
+    }
+
+    .lb-header {
+      text-align: center;
+      margin-bottom: 30px;
+      margin-top: 20px;
+    }
+
+    .game-over-title {
+      font-family: var(--font-pixel);
+      font-size: 48px;
+      color: var(--gold);
+      text-shadow: 4px 4px 0 var(--gold-dark), 6px 6px 0 #8b6914, 0 0 30px rgba(255, 215, 0, 0.5);
+      animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    }
+
+    @keyframes bounceIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      70% { transform: scale(1.05); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .lb-main {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 30px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .spotlight-panel { order: -1; }
+
+    .spotlight-frame {
+      background: linear-gradient(180deg, rgba(35, 25, 18, 0.95) 0%, rgba(28, 20, 14, 0.98) 100%);
+      border: 3px solid #b8956c;
+      padding: 30px 20px;
+      text-align: center;
+      position: relative;
+      box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+    }
+
+    .spotlight-frame::before {
+      content: '';
+      position: absolute;
+      top: 4px; left: 4px; right: 4px; bottom: 4px;
+      border: 1px solid rgba(184, 149, 108, 0.4);
+      pointer-events: none;
+    }
+
+    .spotlight-corner {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-color: var(--gold-accent);
+      border-style: solid;
+      z-index: 2;
+    }
+
+    .spotlight-corner.top-left { top: 8px; left: 8px; border-width: 2px 0 0 2px; }
+    .spotlight-corner.top-right { top: 8px; right: 8px; border-width: 2px 2px 0 0; }
+    .spotlight-corner.bottom-left { bottom: 8px; left: 8px; border-width: 0 0 2px 2px; }
+    .spotlight-corner.bottom-right { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
+
+    .spotlight-label {
+      font-family: var(--font-pixel);
+      font-size: 10px;
+      color: var(--gold-accent);
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+
+    .spotlight-badge {
+      width: 80px;
+      height: 80px;
+      background: url('Badge 2.png') no-repeat center center;
+      background-size: contain;
+      margin: 0 auto 20px auto;
+    }
+
+    .spotlight-name {
+      font-family: var(--font-body);
+      font-size: 22px;
+      font-weight: 700;
+      color: #f0f0f0;
+      margin-bottom: 10px;
+    }
+
+    .spotlight-accuracy {
+      font-family: var(--font-pixel);
+      font-size: 28px;
+      color: var(--gold-accent);
+      text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+      margin-bottom: 15px;
+    }
+
+    .spotlight-subtitle {
+      font-family: var(--font-pixel);
+      font-size: 8px;
+      color: #a0a0a0;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .your-stats {
+      margin-top: 20px;
+      background: rgba(45, 30, 20, 0.6);
+      border: 2px solid rgba(212, 169, 106, 0.3);
+      padding: 16px;
+      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+    }
+
+    .your-stats-label {
+      font-family: var(--font-pixel);
+      font-size: 9px;
+      color: var(--gold-accent);
+      text-align: center;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+
+    .stat-chips {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .stat-chip {
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(35, 22, 12, 0.8);
+      border: 2px solid rgba(212, 169, 106, 0.25);
+    }
+
+    .stat-chip .label {
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .stat-chip .value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #f0f0f0;
+    }
+
+    .leaderboard-column {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .leaderboard-wrapper {
+      position: relative;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .leaderboard-header-row {
+      display: grid;
+      grid-template-columns: 60px 1fr 80px 80px;
+      align-items: center;
+      padding: 12px 18px;
+      background: rgba(45, 30, 20, 0.9);
+      border: 2px solid rgba(212, 169, 106, 0.3);
+      border-bottom: none;
+    }
+
+    .leaderboard-header-row span {
+      font-family: var(--font-pixel);
+      font-size: 10px;
+      color: var(--gold-accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .leaderboard-header-row span:first-child { text-align: center; }
+    .leaderboard-header-row span:nth-child(3),
+    .leaderboard-header-row span:nth-child(4) { text-align: right; }
+
+    .leaderboard-table {
+      background: rgba(45, 30, 20, 0.5);
+      border: 2px solid rgba(212, 169, 106, 0.3);
+      border-top: 1px solid rgba(212, 169, 106, 0.2);
+      max-height: 280px;
+      overflow-y: auto;
+      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
+    }
+
+    .leaderboard-table::-webkit-scrollbar { width: 8px; }
+    .leaderboard-table::-webkit-scrollbar-track { background: var(--brown-dark); }
+    .leaderboard-table::-webkit-scrollbar-thumb { background: var(--gold-accent); }
+
+    .lb-row {
+      display: grid;
+      grid-template-columns: 60px 1fr 80px 80px;
+      align-items: center;
+      padding: 14px 18px;
+      background: rgba(45, 30, 20, 0.8);
+      border-bottom: 1px solid rgba(212, 169, 106, 0.2);
+    }
+
+    .lb-row.rank-1 {
+      background: linear-gradient(135deg, #3d2a00 0%, #4a3200 50%, #3d2a00 100%);
+      border-bottom: 1px solid var(--gold-accent);
+      border-top: 1px solid var(--gold-accent);
+    }
+
+    .lb-row.rank-2 {
+      background: linear-gradient(135deg, #2a2a2a 0%, #3a3a3a 50%, #2a2a2a 100%);
+      border-bottom: 1px solid #808080;
+    }
+
+    .lb-row.rank-3 {
+      background: linear-gradient(135deg, #3d2615 0%, #4a2d1a 50%, #3d2615 100%);
+      border-bottom: 1px solid #8b5a2b;
+    }
+
+    .lb-row:not(.rank-1):not(.rank-2):not(.rank-3):nth-child(odd) { background: rgba(50, 35, 22, 0.85); }
+    .lb-row:not(.rank-1):not(.rank-2):not(.rank-3):nth-child(even) { background: rgba(40, 28, 18, 0.85); }
+
+    .lb-rank {
+      font-family: var(--font-body);
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+      color: var(--gold-accent);
+    }
+
+    .lb-row.rank-1 .lb-rank { color: #f0f0f0; font-size: 24px; }
+    .lb-row.rank-2 .lb-rank { color: #e0e0e0; font-size: 22px; }
+    .lb-row.rank-3 .lb-rank { color: #d0d0d0; font-size: 22px; }
+
+    .lb-name {
+      font-family: var(--font-body);
+      font-size: 18px;
+      font-weight: 600;
+      color: white;
+      padding: 0 10px;
+    }
+
+    .lb-row.rank-1 .lb-name { font-size: 22px; font-weight: 700; }
+
+    .you-tag {
+      display: inline-block;
+      background: var(--gold-accent);
+      color: var(--brown-dark);
+      font-family: var(--font-pixel);
+      font-size: 8px;
+      padding: 3px 6px;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    .lb-stuns, .lb-acc {
+      font-family: var(--font-body);
+      font-size: 18px;
+      font-weight: 600;
+      text-align: right;
+      color: #f0f0f0;
+    }
+
+    .lb-acc { color: #c0c0c0; }
+
+    .lb-row.rank-1 .lb-stuns,
+    .lb-row.rank-1 .lb-acc { font-size: 22px; font-weight: 700; }
+
+    .restart-container {
+      text-align: center;
+      margin-top: 25px;
+    }
+
+    .pixel-button {
+      font-family: var(--font-pixel);
+      font-size: 12px;
+      padding: 14px 28px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.4);
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+
+    .pixel-button:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.4);
+    }
+
+    .pixel-button:active {
+      transform: translate(2px, 2px);
+      box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+    }
+
+    .pixel-button.secondary {
+      background: linear-gradient(180deg, var(--gold-accent) 0%, #b8956c 100%);
+      color: var(--brown-dark);
+    }
+
+    /* Embers */
+    .embers-container {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .ember {
+      position: absolute;
+      bottom: -20px;
+      width: 8px;
+      height: 8px;
+      background: var(--gold);
+      opacity: 0;
+      box-shadow: 2px 2px 0 rgba(255, 140, 0, 0.8);
+      animation: rise linear infinite;
+    }
+
+    .ember:nth-child(1) { left: 5%; animation-duration: 4s; animation-delay: 0s; width: 10px; height: 10px; }
+    .ember:nth-child(2) { left: 15%; animation-duration: 5s; animation-delay: 0.3s; width: 6px; height: 6px; background: #ff8c00; }
+    .ember:nth-child(3) { left: 25%; animation-duration: 4.5s; animation-delay: 0.8s; background: #ff6600; }
+    .ember:nth-child(4) { left: 35%; animation-duration: 5.5s; animation-delay: 0.2s; width: 12px; height: 12px; }
+    .ember:nth-child(5) { left: 50%; animation-duration: 4s; animation-delay: 1s; background: #ffa500; width: 6px; height: 6px; }
+    .ember:nth-child(6) { left: 65%; animation-duration: 4.8s; animation-delay: 0.5s; }
+    .ember:nth-child(7) { left: 75%; animation-duration: 5.2s; animation-delay: 1.5s; background: #ff8c00; width: 10px; height: 10px; }
+    .ember:nth-child(8) { left: 85%; animation-duration: 4.3s; animation-delay: 0.9s; }
+    .ember:nth-child(9) { left: 95%; animation-duration: 5s; animation-delay: 0.4s; background: #ff6600; width: 6px; height: 6px; }
+
+    @keyframes rise {
+      0% { bottom: -20px; opacity: 0; transform: translateX(0) scale(1); }
+      5% { opacity: 0.9; }
+      20% { opacity: 1; transform: translateX(20px) scale(1); }
+      40% { opacity: 0.95; transform: translateX(-20px) scale(0.9); }
+      60% { opacity: 0.8; transform: translateX(15px) scale(0.8); }
+      80% { opacity: 0.5; transform: translateX(-10px) scale(0.6); }
+      100% { bottom: 100%; opacity: 0; transform: translateX(10px) scale(0.3); }
+    }
+
+    /* Image placeholder */
+    .figma-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #2a1f14 0%, #1a120a 100%);
+      color: rgba(255, 255, 255, 0.5);
+      font-family: var(--font-ui);
+    }
+
+    .figma-placeholder .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .figma-placeholder .text {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .figma-placeholder .subtext {
+      font-size: 12px;
+      opacity: 0.6;
+    }
+
+    .image-loaded .figma-placeholder {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>TEACHER FLOW</h1>
+  <p class="subtitle">Click through the screens to review UI consistency</p>
+
+  <div class="prototype-container">
+    <!-- SCREEN 1: Teacher Lobby (Figma Screenshot) -->
+    <div id="screen-lobby" class="screen active">
+      <div class="screen-label">1/4 LOBBY</div>
+      <div class="figma-screen">
+        <div class="figma-placeholder">
+          <div class="icon">🖼️</div>
+          <div class="text">Teacher Lobby</div>
+          <div class="subtext">Figma screenshot</div>
+        </div>
+        <img src="figma-lobby.png" 
+             alt="Teacher Lobby" 
+             onload="this.parentElement.classList.add('image-loaded')"
+             onerror="this.style.display='none'">
+        <!-- Hotspot for START button -->
+        <div class="hotspot" style="bottom: 178px; left: 550px; width: 190px; height: 60px;" onclick="goToScreen('game')">
+          <span class="hotspot-label">Click START</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 2: Ongoing Game (Figma Screenshot) -->
+    <div id="screen-game" class="screen">
+      <div class="screen-label">2/4 GAME</div>
+      <div class="figma-screen">
+        <div class="figma-placeholder">
+          <div class="icon">🎮</div>
+          <div class="text">Ongoing Game</div>
+          <div class="subtext">Figma screenshot</div>
+        </div>
+        <img src="figma-game.png" 
+             alt="Ongoing Game"
+             onload="this.parentElement.classList.add('image-loaded')"
+             onerror="this.style.display='none'">
+        <!-- Hotspot for End Game button -->
+        <div class="hotspot" style="top: 8px; right: 8px; width: 100px; height: 40px;" onclick="goToScreen('podium')">
+          <span class="hotspot-label">End Game</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 3: Podium Celebration (Figma Screenshot) -->
+    <div id="screen-podium" class="screen">
+      <div class="screen-label">3/4 PODIUM</div>
+      <div class="figma-screen">
+        <div class="figma-placeholder">
+          <div class="icon">🏆</div>
+          <div class="text">Podium Celebration</div>
+          <div class="subtext">Figma screenshot</div>
+        </div>
+        <img src="figma-podium.png" 
+             alt="Podium Celebration"
+             onload="this.parentElement.classList.add('image-loaded')"
+             onerror="this.style.display='none'">
+        <!-- Hotspot for Continue -->
+        <div class="hotspot" style="bottom: 40px; right: 40px; width: 160px; height: 50px;" onclick="goToScreen('leaderboard')">
+          <span class="hotspot-label">Continue →</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCREEN 4: Final Leaderboard (HTML Version - Your Built Component) -->
+    <div id="screen-leaderboard" class="screen">
+      <div class="screen-label">4/4 LEADERBOARD</div>
+      <div class="embers-container">
+        <div class="ember"></div>
+        <div class="ember"></div>
+        <div class="ember"></div>
+        <div class="ember"></div>
+        <div class="ember"></div>
+        <div class="ember"></div>
+        <div class="ember"></div>
+        <div class="ember"></div>
+        <div class="ember"></div>
+      </div>
+
+      <div class="leaderboard-content">
+        <img src="Wayarena logo.png" alt="WayArena" class="lb-logo">
+
+        <div class="lb-header">
+          <h1 class="game-over-title">GAME OVER!</h1>
+        </div>
+
+        <div class="lb-main">
+          <div class="spotlight-panel">
+            <div class="spotlight-frame">
+              <div class="spotlight-corner top-left"></div>
+              <div class="spotlight-corner top-right"></div>
+              <div class="spotlight-corner bottom-left"></div>
+              <div class="spotlight-corner bottom-right"></div>
+
+              <div class="spotlight-label">SHARPSHOOTER</div>
+              <div class="spotlight-badge"></div>
+              <div class="spotlight-name">Astha</div>
+              <div class="spotlight-accuracy">97%</div>
+              <div class="spotlight-subtitle">TOP ACCURACY</div>
+            </div>
+
+            <div class="your-stats">
+              <div class="your-stats-label">YOUR STATS</div>
+              <div class="stat-chips">
+                <div class="stat-chip">
+                  <span class="label">Stuns</span>
+                  <span class="value">30</span>
+                </div>
+                <div class="stat-chip">
+                  <span class="label">Got Stunned</span>
+                  <span class="value">14</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="leaderboard-column">
+            <div class="leaderboard-wrapper">
+              <div class="leaderboard-header-row">
+                <span>#</span>
+                <span>NAME</span>
+                <span>STUNS</span>
+                <span>ACC</span>
+              </div>
+              <div class="leaderboard-table">
+                <div class="lb-row rank-1">
+                  <div class="lb-rank">👑 1</div>
+                  <div class="lb-name">karararan</div>
+                  <div class="lb-stuns">30</div>
+                  <div class="lb-acc">78%</div>
+                </div>
+                <div class="lb-row rank-2">
+                  <div class="lb-rank">2</div>
+                  <div class="lb-name">Sanskar</div>
+                  <div class="lb-stuns">21</div>
+                  <div class="lb-acc">82%</div>
+                </div>
+                <div class="lb-row rank-3">
+                  <div class="lb-rank">3</div>
+                  <div class="lb-name">ANKITG X DEEPAKC</div>
+                  <div class="lb-stuns">11</div>
+                  <div class="lb-acc">75%</div>
+                </div>
+                <div class="lb-row">
+                  <div class="lb-rank">4</div>
+                  <div class="lb-name">rachit</div>
+                  <div class="lb-stuns">8</div>
+                  <div class="lb-acc">89%</div>
+                </div>
+                <div class="lb-row">
+                  <div class="lb-rank">5</div>
+                  <div class="lb-name">Astha</div>
+                  <div class="lb-stuns">5</div>
+                  <div class="lb-acc">97%</div>
+                </div>
+                <div class="lb-row">
+                  <div class="lb-rank">6</div>
+                  <div class="lb-name"><span class="you-tag">YOU</span>Shourya</div>
+                  <div class="lb-stuns">3</div>
+                  <div class="lb-acc">85%</div>
+                </div>
+                <div class="lb-row">
+                  <div class="lb-rank">7</div>
+                  <div class="lb-name">PixelMaster99</div>
+                  <div class="lb-stuns">3</div>
+                  <div class="lb-acc">71%</div>
+                </div>
+                <div class="lb-row">
+                  <div class="lb-rank">8</div>
+                  <div class="lb-name">ArenaKing</div>
+                  <div class="lb-stuns">2</div>
+                  <div class="lb-acc">68%</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="restart-container">
+              <button class="pixel-button secondary" onclick="goToScreen('lobby')">PLAY AGAIN</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Flow Indicator -->
+  <div class="flow-indicator">
+    <div class="flow-step active" data-screen="lobby" onclick="goToScreen('lobby')">
+      <span class="flow-dot"></span>
+      <span>Lobby</span>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step" data-screen="game" onclick="goToScreen('game')">
+      <span class="flow-dot"></span>
+      <span>Game</span>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step" data-screen="podium" onclick="goToScreen('podium')">
+      <span class="flow-dot"></span>
+      <span>Podium</span>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step" data-screen="leaderboard" onclick="goToScreen('leaderboard')">
+      <span class="flow-dot"></span>
+      <span>Leaderboard</span>
+    </div>
+  </div>
+
+  <p class="keyboard-hint">Use <kbd>←</kbd> <kbd>→</kbd> arrow keys or <kbd>Space</kbd> to navigate</p>
+
+  <script>
+    const screens = ['lobby', 'game', 'podium', 'leaderboard'];
+    let currentScreenIndex = 0;
+
+    function goToScreen(screenName) {
+      const newIndex = screens.indexOf(screenName);
+      if (newIndex === -1) return;
+
+      document.getElementById(`screen-${screens[currentScreenIndex]}`).classList.remove('active');
+      document.getElementById(`screen-${screenName}`).classList.add('active');
+      updateFlowIndicator(newIndex);
+      currentScreenIndex = newIndex;
+    }
+
+    function updateFlowIndicator(newIndex) {
+      const steps = document.querySelectorAll('.flow-step');
+      steps.forEach((step, index) => {
+        step.classList.remove('active', 'completed');
+        if (index < newIndex) {
+          step.classList.add('completed');
+        } else if (index === newIndex) {
+          step.classList.add('active');
+        }
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        const nextIndex = (currentScreenIndex + 1) % screens.length;
+        goToScreen(screens[nextIndex]);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const prevIndex = (currentScreenIndex - 1 + screens.length) % screens.length;
+        goToScreen(screens[prevIndex]);
+      }
+    });
+  </script>
+</body>
+</html>

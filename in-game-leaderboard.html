@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WayArena - In-Game Leaderboard</title>
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Panel colors - dark theme */
+      --panel-bg: rgba(45, 30, 50, 0.88);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --panel-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      
+      /* Text colors */
+      --title-color: #FFE9B0;
+      --text-primary: #F1F1F1;
+      --text-score: #FFFFFF;
+      --text-rank: rgba(255, 255, 255, 0.7);
+      
+      /* Accent colors */
+      --gold-badge-bg: #FFD54A;
+      --gold-badge-text: #2B1A00;
+      --rank-up-color: #66FF8A;
+      --current-player-bg: rgba(255, 255, 255, 0.06);
+      --current-player-glow: #66FF8A;
+      --top1-row-bg: rgba(255, 210, 120, 0.12);
+      
+      /* Row separator */
+      --separator-color: rgba(255, 255, 255, 0.08);
+      
+      /* Spacing */
+      --panel-width: 210px;
+      --panel-padding: 12px;
+      --panel-radius: 14px;
+      --row-padding-v: 8px;
+      --row-padding-h: 10px;
+      
+      /* Typography */
+      --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: var(--font-main);
+      background: #1a1a2e;
+      overflow: hidden;
+    }
+
+    /* Demo background container */
+    .demo-container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .game-background {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      transition: opacity 0.5s ease;
+    }
+
+    .game-background.desert {
+      background: linear-gradient(135deg, #d4a574 0%, #a67c52 50%, #8b5a2b 100%);
+    }
+
+    .game-background.candy {
+      background: linear-gradient(135deg, #ffb6c1 0%, #ff85a2 50%, #ff69b4 100%);
+    }
+
+    .game-background.forest {
+      background: linear-gradient(135deg, #2d8b2d 0%, #1a6b1a 50%, #0d4d0d 100%);
+    }
+
+    .game-background.purple {
+      background: linear-gradient(135deg, #7b5a9e 0%, #5a3d7a 50%, #3d2a5c 100%);
+    }
+
+    /* Background switcher */
+    .bg-switcher {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 8px;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 12px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+    }
+
+    .bg-switcher button {
+      font-family: var(--font-main);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 8px 12px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .bg-switcher button:hover {
+      transform: scale(1.05);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .bg-switcher button.active {
+      border-color: var(--title-color);
+      box-shadow: 0 0 12px rgba(255, 233, 176, 0.4);
+    }
+
+    .bg-switcher .desert-btn { background: #8b5a2b; }
+    .bg-switcher .candy-btn { background: #ff69b4; }
+    .bg-switcher .forest-btn { background: #228b22; }
+    .bg-switcher .purple-btn { background: #5a3d7a; }
+
+    /* Leaderboard Panel */
+    .leaderboard-panel {
+      position: fixed;
+      top: 80px;
+      left: 20px;
+      width: var(--panel-width);
+      border-radius: var(--panel-radius);
+      overflow: hidden;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      box-shadow: var(--panel-shadow);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      animation: slideIn 0.4s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Header */
+    .leaderboard-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px var(--panel-padding);
+      border-bottom: 1px solid var(--separator-color);
+    }
+
+    .header-dots {
+      color: var(--title-color);
+      font-size: 10px;
+      opacity: 0.7;
+      letter-spacing: 2px;
+    }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--title-color);
+      letter-spacing: 0.3px;
+    }
+
+    /* Leaderboard Body */
+    .leaderboard-body {
+      padding: 8px 0;
+    }
+
+    /* Rows Container */
+    .leaderboard-rows {
+      display: flex;
+      flex-direction: column;
+      max-height: 320px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    }
+
+    .leaderboard-rows::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .leaderboard-rows::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .leaderboard-rows::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+    }
+
+    /* Player Row */
+    .player-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--row-padding-v) var(--row-padding-h);
+      margin: 0 var(--panel-padding);
+      border-radius: 6px;
+      transition: all 0.25s ease;
+      position: relative;
+    }
+
+    /* Row separator */
+    .player-row:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 8px;
+      right: 8px;
+      height: 1px;
+      background: var(--separator-color);
+    }
+
+    /* Top 1 player row - warm background */
+    .player-row.rank-1 {
+      background: var(--top1-row-bg);
+    }
+
+    .player-row.rank-1::after {
+      display: none;
+    }
+
+    /* Current player highlight */
+    .player-row.current-player {
+      background: var(--current-player-bg);
+      position: relative;
+    }
+
+    .player-row.current-player::before {
+      content: '';
+      position: absolute;
+      left: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--current-player-glow);
+      box-shadow: 0 0 8px var(--current-player-glow), 0 0 12px var(--current-player-glow);
+      animation: glowPulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { opacity: 0.6; box-shadow: 0 0 6px var(--current-player-glow); }
+      50% { opacity: 1; box-shadow: 0 0 12px var(--current-player-glow), 0 0 16px var(--current-player-glow); }
+    }
+
+    /* Rank highlight animation */
+    .player-row.rank-changed {
+      animation: rankHighlight 0.35s ease-out;
+    }
+
+    @keyframes rankHighlight {
+      0% { background: rgba(102, 255, 138, 0.2); }
+      100% { background: transparent; }
+    }
+
+    .player-row.rank-1.rank-changed {
+      animation: rankHighlightGold 0.35s ease-out;
+    }
+
+    @keyframes rankHighlightGold {
+      0% { background: rgba(255, 210, 120, 0.35); }
+      100% { background: var(--top1-row-bg); }
+    }
+
+    /* Slide up animation */
+    .player-row.slide-up {
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(10px); opacity: 0.7; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .player-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    /* Trophy/Rank icon */
+    .rank-icon {
+      width: 22px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+    }
+
+    .rank-number {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text-rank);
+      width: 22px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .trophy-gold { filter: drop-shadow(0 1px 3px rgba(255, 215, 0, 0.5)); }
+    .trophy-silver { filter: drop-shadow(0 1px 3px rgba(192, 192, 192, 0.5)); }
+    .trophy-bronze { filter: drop-shadow(0 1px 3px rgba(205, 127, 50, 0.5)); }
+
+    .player-name {
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.4;
+    }
+
+    .you-label {
+      color: rgba(255, 255, 255, 0.5);
+      font-weight: 400;
+    }
+
+    /* Score section */
+    .score-section {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    /* Rank change indicator */
+    .rank-change {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--rank-up-color);
+      animation: fadeInUp 0.3s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Score badge - default */
+    .score-badge {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--text-score);
+      min-width: 24px;
+      text-align: right;
+    }
+
+    /* Gold badge for first place */
+    .score-badge.gold-badge {
+      background: var(--gold-badge-bg);
+      color: var(--gold-badge-text);
+      padding: 2px 10px;
+      border-radius: 999px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(255, 213, 74, 0.3);
+    }
+
+    .score-badge.gold-badge.flash {
+      animation: badgeFlash 0.35s ease-out;
+    }
+
+    @keyframes badgeFlash {
+      0% { transform: scale(1.15); box-shadow: 0 0 16px rgba(255, 213, 74, 0.6); }
+      100% { transform: scale(1); box-shadow: 0 2px 6px rgba(255, 213, 74, 0.3); }
+    }
+
+    /* Demo HUD bar */
+    .demo-hud {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background: rgba(15, 10, 20, 0.9);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 50;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .hud-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-placeholder {
+      font-family: var(--font-main);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--title-color);
+      letter-spacing: 1px;
+    }
+
+    .timer-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+    }
+
+    .timer-icon {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+    }
+
+    .timer-value {
+      font-family: var(--font-main);
+      font-weight: 700;
+      font-size: 16px;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <!-- Demo HUD Bar -->
+  <div class="demo-hud">
+    <div class="hud-left">
+      <div class="logo-placeholder">WAYARENA</div>
+      <div class="timer-badge">
+        <span class="timer-icon">⏱</span>
+        <span class="timer-value">5:45</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Background -->
+  <div class="demo-container">
+    <div class="game-background purple active" id="bg-purple"></div>
+    <div class="game-background desert" id="bg-desert" style="opacity: 0;"></div>
+    <div class="game-background candy" id="bg-candy" style="opacity: 0;"></div>
+    <div class="game-background forest" id="bg-forest" style="opacity: 0;"></div>
+  </div>
+
+  <!-- Leaderboard Panel -->
+  <div class="leaderboard-panel">
+    <div class="leaderboard-header">
+      <span class="header-dots">··</span>
+      <span class="header-title">Leaderboard</span>
+      <span class="header-dots">··</span>
+    </div>
+    <div class="leaderboard-body">
+      <div class="leaderboard-rows" id="leaderboard-rows">
+        <!-- Rows populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Background Switcher -->
+  <div class="bg-switcher">
+    <button class="purple-btn active" data-bg="purple">Purple</button>
+    <button class="desert-btn" data-bg="desert">Desert</button>
+    <button class="candy-btn" data-bg="candy">Candy</button>
+    <button class="forest-btn" data-bg="forest">Forest</button>
+  </div>
+
+  <script>
+    const leaderboardData = [
+      { name: "Meeth Maharana", score: 56, isCurrentUser: false, rankChange: 0 },
+      { name: "Karan", score: 3, isCurrentUser: true, rankChange: 1 },
+      { name: "Rachit", score: 3, isCurrentUser: false, rankChange: 0 },
+      { name: "Helloworld", score: 3, isCurrentUser: false, rankChange: 0 },
+      { name: "XDeependraXcvf", score: 3, isCurrentUser: false, rankChange: 0 },
+      { name: "Rajnarani bananc", score: 3, isCurrentUser: false, rankChange: 0 },
+      { name: "karan", score: 5, isCurrentUser: false, rankChange: 5 },
+      { name: "Hellotodaythe", score: 3, isCurrentUser: false, rankChange: 0 }
+    ];
+
+    function getTrophyIcon(rank) {
+      const trophies = {
+        1: { emoji: '🏆', class: 'trophy-gold' },
+        2: { emoji: '🏆', class: 'trophy-silver' },
+        3: { emoji: '🏆', class: 'trophy-bronze' }
+      };
+      
+      if (rank > 3) return null;
+      return trophies[rank];
+    }
+
+    function getRankDisplay(rank) {
+      const trophy = getTrophyIcon(rank);
+      if (trophy) {
+        return `<span class="rank-icon ${trophy.class}">${trophy.emoji}</span>`;
+      }
+      return `<span class="rank-number">${rank}</span>`;
+    }
+
+    function getRankChangeDisplay(change) {
+      if (change > 0) {
+        return `<span class="rank-change">↑${change}</span>`;
+      }
+      return '';
+    }
+
+    function createLeaderboard() {
+      const container = document.getElementById('leaderboard-rows');
+      container.innerHTML = '';
+      
+      const sortedData = [...leaderboardData].sort((a, b) => b.score - a.score);
+      
+      sortedData.forEach((player, index) => {
+        const rank = index + 1;
+        const row = document.createElement('div');
+        
+        const classes = ['player-row'];
+        if (rank === 1) classes.push('rank-1');
+        if (player.isCurrentUser) classes.push('current-player');
+        if (player.rankChange > 0) classes.push('rank-changed', 'slide-up');
+        
+        row.className = classes.join(' ');
+        
+        const nameDisplay = player.isCurrentUser 
+          ? `${player.name} <span class="you-label">(You)</span>`
+          : player.name;
+        
+        const scoreBadgeClass = rank === 1 
+          ? 'score-badge gold-badge' + (player.rankChange > 0 ? ' flash' : '')
+          : 'score-badge';
+        
+        row.innerHTML = `
+          <div class="player-info">
+            ${getRankDisplay(rank)}
+            <span class="player-name">${nameDisplay}</span>
+          </div>
+          <div class="score-section">
+            ${getRankChangeDisplay(player.rankChange)}
+            <span class="${scoreBadgeClass}">${player.score}</span>
+          </div>
+        `;
+        
+        container.appendChild(row);
+      });
+    }
+
+    function setupBackgroundSwitcher() {
+      const buttons = document.querySelectorAll('.bg-switcher button');
+      const backgrounds = {
+        purple: document.getElementById('bg-purple'),
+        desert: document.getElementById('bg-desert'),
+        candy: document.getElementById('bg-candy'),
+        forest: document.getElementById('bg-forest')
+      };
+
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const bgType = btn.dataset.bg;
+          
+          buttons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          
+          Object.keys(backgrounds).forEach(key => {
+            backgrounds[key].style.opacity = key === bgType ? '1' : '0';
+          });
+        });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      createLeaderboard();
+      setupBackgroundSwitcher();
+    });
+  </script>
+</body>
+</html>

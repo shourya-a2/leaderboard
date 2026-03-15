@@ -6,7 +6,7 @@
   <title>WayArena - Game Over</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -14,28 +14,49 @@
       box-sizing: border-box;
     }
 
+    :root {
+      --sand-light: #e8d4b8;
+      --sand-medium: #c4a574;
+      --sand-dark: #a67c52;
+      --brick-orange: #c45c2c;
+      --brick-brown: #8b4513;
+      --gold: #ffd700;
+      --gold-dark: #daa520;
+      --white: #ffffff;
+      --text-dark: #3d2815;
+      --panel-bg: rgba(61, 40, 21, 0.85);
+      --panel-border: #8b5a2b;
+      
+      /* Spell Colors */
+      --spell-blue: #00BFFF;
+      --spell-green: #00FF00;
+      --spell-red: #FF4444;
+      --spell-gold: #FFD700;
+    }
+
     body {
       min-height: 100vh;
-      background: url('arena-bg.png') center center / cover no-repeat fixed;
-      font-family: 'VT323', monospace;
-      color: #fff;
+      background: #2a1a0a;
+      font-family: 'Fredoka', sans-serif;
+      color: var(--white);
       overflow-x: hidden;
     }
 
-    body::before {
-      content: '';
+    /* Background image with dimming filter */
+    .bg-image {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: linear-gradient(180deg, rgba(26, 10, 26, 0.75) 0%, rgba(45, 14, 45, 0.85) 50%, rgba(26, 10, 26, 0.9) 100%);
+      background: url('arena-bg.png') center center / cover no-repeat;
+      filter: brightness(0.72) saturate(0.6);
       pointer-events: none;
-      z-index: -1;
+      z-index: -2;
     }
 
-    /* Rising Embers Animation */
-    .embers-container {
+    /* Floating Spell Particles */
+    .particles-container {
       position: fixed;
       top: 0;
       left: 0;
@@ -46,147 +67,281 @@
       overflow: hidden;
     }
 
-    .ember {
+    .spell-orb {
       position: absolute;
-      bottom: -20px;
-      width: 8px;
-      height: 8px;
-      background: #ffd700;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
       opacity: 0;
-      box-shadow: 0 0 10px 3px rgba(255, 215, 0, 0.8);
-      animation: rise linear infinite;
+      filter: blur(2px);
+      animation: float linear infinite;
     }
 
-    .ember:nth-child(1) { left: 8%; animation-duration: 5s; animation-delay: 0s; width: 10px; height: 10px; }
-    .ember:nth-child(2) { left: 18%; animation-duration: 6s; animation-delay: 0.5s; width: 6px; height: 6px; background: #ff8c00; box-shadow: 0 0 10px 3px rgba(255, 140, 0, 0.8); }
-    .ember:nth-child(3) { left: 30%; animation-duration: 5.5s; animation-delay: 1s; background: #ff6600; box-shadow: 0 0 12px 4px rgba(255, 102, 0, 0.8); }
-    .ember:nth-child(4) { left: 42%; animation-duration: 6.5s; animation-delay: 0.3s; width: 12px; height: 12px; }
-    .ember:nth-child(5) { left: 55%; animation-duration: 5s; animation-delay: 1.5s; background: #ffa500; box-shadow: 0 0 10px 3px rgba(255, 165, 0, 0.8); }
-    .ember:nth-child(6) { left: 68%; animation-duration: 5.8s; animation-delay: 0.8s; width: 7px; height: 7px; }
-    .ember:nth-child(7) { left: 80%; animation-duration: 6.2s; animation-delay: 2s; background: #ff8c00; box-shadow: 0 0 12px 4px rgba(255, 140, 0, 0.8); }
-    .ember:nth-child(8) { left: 92%; animation-duration: 5.3s; animation-delay: 1.2s; width: 9px; height: 9px; }
-
-    @keyframes rise {
+    @keyframes float {
       0% {
-        bottom: -20px;
+        transform: translateY(100vh) translateX(0) scale(0.5);
         opacity: 0;
-        transform: translateX(0) scale(1);
       }
-      5% {
-        opacity: 1;
+      10% {
+        opacity: 0.6;
       }
-      30% {
-        opacity: 0.9;
-        transform: translateX(15px) scale(0.9);
+      50% {
+        transform: translateY(50vh) translateX(30px) scale(0.8);
+        opacity: 0.5;
       }
-      60% {
-        opacity: 0.7;
-        transform: translateX(-15px) scale(0.7);
-      }
-      85% {
+      90% {
         opacity: 0.4;
       }
       100% {
-        bottom: 100%;
+        transform: translateY(-10vh) translateX(-20px) scale(1);
         opacity: 0;
-        transform: translateX(10px) scale(0.4);
       }
     }
 
+    /* Blue Orbs */
+    .spell-orb.blue {
+      background: var(--spell-blue);
+      box-shadow: 0 0 10px var(--spell-blue), 0 0 20px var(--spell-blue);
+    }
+
+    /* Green Orbs */
+    .spell-orb.green {
+      background: var(--spell-green);
+      box-shadow: 0 0 10px var(--spell-green), 0 0 20px var(--spell-green);
+    }
+
+    /* Red Orbs */
+    .spell-orb.red {
+      background: var(--spell-red);
+      box-shadow: 0 0 10px var(--spell-red), 0 0 20px var(--spell-red);
+    }
+
+    /* Gold Orbs */
+    .spell-orb.gold {
+      background: var(--spell-gold);
+      box-shadow: 0 0 10px var(--spell-gold), 0 0 20px var(--spell-gold);
+    }
+
+    /* Individual orb positions, sizes, and timings */
+    .spell-orb:nth-child(1) { left: 5%; width: 10px; height: 10px; animation-duration: 12s; animation-delay: 0s; }
+    .spell-orb:nth-child(2) { left: 12%; width: 8px; height: 8px; animation-duration: 10s; animation-delay: 1s; }
+    .spell-orb:nth-child(3) { left: 20%; width: 14px; height: 14px; animation-duration: 14s; animation-delay: 2s; }
+    .spell-orb:nth-child(4) { left: 28%; width: 10px; height: 10px; animation-duration: 11s; animation-delay: 0.5s; }
+    .spell-orb:nth-child(5) { left: 35%; width: 12px; height: 12px; animation-duration: 13s; animation-delay: 3s; }
+    .spell-orb:nth-child(6) { left: 45%; width: 8px; height: 8px; animation-duration: 9s; animation-delay: 1.5s; }
+    .spell-orb:nth-child(7) { left: 55%; width: 16px; height: 16px; animation-duration: 15s; animation-delay: 0.8s; }
+    .spell-orb:nth-child(8) { left: 62%; width: 10px; height: 10px; animation-duration: 11s; animation-delay: 2.5s; }
+    .spell-orb:nth-child(9) { left: 70%; width: 12px; height: 12px; animation-duration: 12s; animation-delay: 1.2s; }
+    .spell-orb:nth-child(10) { left: 78%; width: 8px; height: 8px; animation-duration: 10s; animation-delay: 3.5s; }
+    .spell-orb:nth-child(11) { left: 85%; width: 14px; height: 14px; animation-duration: 14s; animation-delay: 0.3s; }
+    .spell-orb:nth-child(12) { left: 92%; width: 10px; height: 10px; animation-duration: 11s; animation-delay: 2s; }
+    .spell-orb:nth-child(13) { left: 8%; width: 12px; height: 12px; animation-duration: 13s; animation-delay: 4s; }
+    .spell-orb:nth-child(14) { left: 40%; width: 10px; height: 10px; animation-duration: 12s; animation-delay: 5s; }
+    .spell-orb:nth-child(15) { left: 65%; width: 8px; height: 8px; animation-duration: 10s; animation-delay: 4.5s; }
+    .spell-orb:nth-child(16) { left: 88%; width: 12px; height: 12px; animation-duration: 14s; animation-delay: 6s; }
+
+    /* Subtle overlay for readability */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.3) 100%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* Logo */
+    .logo-container {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 10;
+    }
+
+    .logo {
+      height: 80px;
+      width: auto;
+    }
+
     .container {
-      max-width: 700px;
+      max-width: 900px;
       margin: 0 auto;
-      padding: 30px 20px;
+      padding: 24px 20px;
       display: flex;
       flex-direction: column;
       min-height: 100vh;
+      position: relative;
+      z-index: 1;
     }
 
-    /* Header Section */
+    /* Header */
     .header {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 24px;
+      margin-top: 40px;
     }
 
     .game-over-title {
       font-family: 'Press Start 2P', cursive;
-      font-size: clamp(28px, 6vw, 48px);
-      color: #ffd700;
+      font-size: clamp(24px, 5vw, 40px);
+      color: var(--gold);
       text-shadow: 
-        4px 4px 0 #b8860b,
-        6px 6px 0 #8b6914,
-        0 0 30px rgba(255, 215, 0, 0.5);
-      animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-      transform: scale(0.5);
-      margin-bottom: 25px;
+        4px 4px 0 var(--brick-brown),
+        -1px -1px 0 var(--brick-brown),
+        1px -1px 0 var(--brick-brown),
+        -1px 1px 0 var(--brick-brown);
+      animation: bounceIn 0.5s ease-out forwards;
+      transform: scale(0.8);
+      letter-spacing: 2px;
     }
 
     @keyframes bounceIn {
-      0% { transform: scale(0.5); opacity: 0; }
-      70% { transform: scale(1.05); }
+      0% { transform: scale(0.8); opacity: 0; }
+      60% { transform: scale(1.05); }
       100% { transform: scale(1); opacity: 1; }
     }
 
-    .stat-chips {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      flex-wrap: wrap;
+    /* Main Layout */
+    .main-content {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 20px;
+      flex: 1;
+      align-items: start;
     }
 
-    .stat-chip {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 10px;
-      padding: 12px 20px;
-      border-radius: 4px;
+    /* Side Panel */
+    .side-panel {
       display: flex;
-      align-items: center;
-      gap: 8px;
-      animation: slideUp 0.5s ease-out forwards;
-      opacity: 0;
-      transform: translateY(20px);
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Pixel Panel Style - matches game brick aesthetic */
+    .pixel-panel {
+      background: var(--panel-bg);
+      border: 4px solid var(--panel-border);
+      padding: 20px;
+      position: relative;
+    }
+
+    /* Inner pixel border effect */
+    .pixel-panel::before {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      right: 2px;
+      bottom: 2px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      pointer-events: none;
+    }
+
+    .panel-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 12px;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
 
-    .stat-chip.stuns {
-      background: #00e5ff;
-      border: 3px solid #006b7a;
-      border-bottom-width: 5px;
-      color: #003844;
-      animation-delay: 0.3s;
+    /* Sharpshooter Panel */
+    .sharpshooter-badge {
+      width: 48px;
+      height: 48px;
+      background: url('Badge 2.png') no-repeat center center;
+      background-size: contain;
+      margin: 0 auto 10px auto;
     }
 
-    .stat-chip.stunned {
-      background: #ff3d7f;
-      border: 3px solid #7a1a3a;
-      border-bottom-width: 5px;
-      color: #3d0a1a;
-      animation-delay: 0.4s;
+    .sharpshooter-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--white);
+      text-align: center;
+      margin-bottom: 4px;
     }
 
-    @keyframes slideUp {
-      to { opacity: 1; transform: translateY(0); }
+    .sharpshooter-accuracy {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--gold);
+      text-align: center;
     }
 
-    /* Leaderboard Section */
+    .sharpshooter-label {
+      font-size: 12px;
+      color: var(--sand-light);
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    /* Your Stats */
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--sand-light);
+      font-weight: 500;
+    }
+
+    .stat-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    /* Leaderboard */
     .leaderboard-wrapper {
-      flex: 1;
-      position: relative;
-      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .leaderboard-header {
+      display: grid;
+      grid-template-columns: 50px 1fr 70px 90px;
+      gap: 0 12px;
+      padding: 12px 16px;
+      background: var(--brick-brown);
+      border: 4px solid var(--panel-border);
+      border-bottom: none;
+    }
+
+    .leaderboard-header span {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .leaderboard-header span:nth-child(3),
+    .leaderboard-header span:nth-child(4) {
+      text-align: right;
     }
 
     .leaderboard {
       max-height: calc(100vh - 280px);
       overflow-y: auto;
-      padding: 0;
-      scrollbar-width: thin;
-      scrollbar-color: #d4a96a #1a0a1a;
-      background: rgba(45, 14, 45, 0.5);
-      border: 2px solid rgba(212, 169, 106, 0.3);
-      border-top: 1px solid rgba(212, 169, 106, 0.2);
-      border-radius: 0 0 10px 10px;
+      background: var(--panel-bg);
+      border: 4px solid var(--panel-border);
+      border-top: none;
     }
 
     .leaderboard::-webkit-scrollbar {
@@ -194,469 +349,328 @@
     }
 
     .leaderboard::-webkit-scrollbar-track {
-      background: #1a0a1a;
-      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.2);
     }
 
     .leaderboard::-webkit-scrollbar-thumb {
-      background: #d4a96a;
-      border-radius: 4px;
-    }
-
-    .leaderboard::after {
-      content: '';
-      position: sticky;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background: linear-gradient(transparent, #1a0a1a);
-      pointer-events: none;
-      display: block;
-    }
-
-    .fade-bottom {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 80px;
-      background: linear-gradient(transparent, #1a0a1a);
-      pointer-events: none;
-      z-index: 10;
-    }
-
-    .leaderboard-header-row {
-      display: grid;
-      grid-template-columns: 60px 1fr 80px 80px;
-      align-items: center;
-      padding: 12px 18px;
-      margin-bottom: 0;
-      background: rgba(45, 14, 45, 0.9);
-      border: 2px solid rgba(212, 169, 106, 0.3);
-      border-bottom: none;
-      border-radius: 10px 10px 0 0;
-    }
-
-    .leaderboard-header-row span {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 10px;
-      color: #d4a96a;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .leaderboard-header-row span:first-child {
-      text-align: center;
-    }
-
-    .leaderboard-header-row span:nth-child(3),
-    .leaderboard-header-row span:nth-child(4) {
-      text-align: right;
+      background: var(--panel-border);
     }
 
     .leaderboard-row {
       display: grid;
-      grid-template-columns: 60px 1fr 80px 80px;
+      grid-template-columns: 50px 1fr 70px 90px;
+      gap: 0 12px;
       align-items: center;
-      padding: 14px 18px;
-      margin-bottom: 0;
-      border-radius: 0;
-      background: rgba(45, 14, 45, 0.8);
-      border: none;
-      border-bottom: 1px solid rgba(212, 169, 106, 0.2);
-      opacity: 0;
-      transform: translateY(30px);
-      will-change: transform, opacity;
-      animation: rowSlideIn 0.4s ease-out forwards;
+      padding: 12px 16px;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+      transition: background 0.15s ease;
     }
 
-    @keyframes rowSlideIn {
-      to { opacity: 1; transform: translateY(0); }
+    .leaderboard-row:hover {
+      background: rgba(255, 255, 255, 0.05);
     }
 
-    /* Top 3 Special Styles */
-    .leaderboard-row.rank-1 {
-      background: linear-gradient(135deg, #3d2a00 0%, #5c4000 50%, #3d2a00 100%);
-      border: none;
-      border-bottom: 2px solid #ffd700;
-      border-top: 2px solid #ffd700;
-      box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
-      padding: 18px 18px;
-      position: relative;
-      overflow: hidden;
-      animation: rowSlideIn 0.4s ease-out forwards, goldPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes goldPulse {
-      0%, 100% { box-shadow: 0 0 25px rgba(255, 215, 0, 0.4); }
-      50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.7), 0 0 60px rgba(255, 215, 0, 0.3); }
-    }
-
-    .leaderboard-row.rank-2 {
-      background: linear-gradient(135deg, #2a2a30 0%, #4a4a55 50%, #2a2a30 100%);
-      border: none;
-      border-bottom: 2px solid #c0c0c0;
-      border-top: 2px solid #c0c0c0;
-      box-shadow: 0 0 20px rgba(192, 192, 192, 0.3);
-      animation: rowSlideIn 0.4s ease-out forwards, silverPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes silverPulse {
-      0%, 100% { box-shadow: 0 0 20px rgba(192, 192, 192, 0.3); }
-      50% { box-shadow: 0 0 35px rgba(192, 192, 192, 0.5); }
-    }
-
-    .leaderboard-row.rank-3 {
-      background: linear-gradient(135deg, #3d2615 0%, #6b4423 50%, #3d2615 100%);
-      border: none;
-      border-bottom: 2px solid #cd7f32;
-      border-top: 2px solid #cd7f32;
-      box-shadow: 0 0 20px rgba(205, 127, 50, 0.3);
-      animation: rowSlideIn 0.4s ease-out forwards, bronzePulse 2s ease-in-out infinite;
-    }
-
-    @keyframes bronzePulse {
-      0%, 100% { box-shadow: 0 0 20px rgba(205, 127, 50, 0.3); }
-      50% { box-shadow: 0 0 35px rgba(205, 127, 50, 0.5); }
-    }
-
+    /* Rank styling */
     .rank {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 14px;
+      font-size: 18px;
+      font-weight: 700;
       text-align: center;
     }
 
-    .rank-1 .rank { color: #ffd700; font-size: 18px; }
-    .rank-2 .rank { color: #c0c0c0; font-size: 16px; }
-    .rank-3 .rank { color: #cd7f32; font-size: 16px; }
-
-    .medal {
-      font-size: 20px;
-      margin-right: 5px;
-    }
-
-    .rank-1 .medal { font-size: 26px; }
-
     .player-name {
-      font-family: 'VT323', monospace;
-      font-size: 26px;
-      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--white);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      padding: 0 10px;
+      padding-right: 8px;
     }
 
-    .rank-1 .player-name {
-      font-size: 30px;
-      color: #ffd700;
-      text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-    }
-
-    .stun-count {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 12px;
-      color: #00e5ff;
+    .stun-count, .accuracy {
+      font-size: 16px;
+      font-weight: 600;
       text-align: right;
+      color: var(--sand-light);
     }
 
-    .rank-1 .stun-count {
+    /* Top 3 Ranks */
+    .leaderboard-row.rank-1 {
+      background: linear-gradient(90deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 215, 0, 0.1) 100%);
+      border-left: 4px solid var(--gold);
+    }
+
+    .leaderboard-row.rank-1 .rank {
+      color: var(--gold);
+    }
+
+    .leaderboard-row.rank-1 .rank::before {
+      content: '';
       font-size: 14px;
     }
 
-    .accuracy {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 12px;
-      color: #ffd700;
-      text-align: right;
+    .leaderboard-row.rank-2 {
+      background: linear-gradient(90deg, rgba(192, 192, 192, 0.15) 0%, rgba(192, 192, 192, 0.05) 100%);
+      border-left: 4px solid #c0c0c0;
     }
 
-    .rank-1 .accuracy {
-      font-size: 14px;
+    .leaderboard-row.rank-2 .rank {
+      color: #c0c0c0;
     }
 
-    /* Awards Banner - Integrated with leaderboard style */
-    .awards-banner {
-      display: inline-flex;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 12px;
-      margin: 20px 0 15px 0;
-      padding: 8px 16px;
-      background: rgba(45, 14, 45, 0.8);
-      border: 2px solid rgba(212, 169, 106, 0.3);
-      border-radius: 10px;
+    .leaderboard-row.rank-3 {
+      background: linear-gradient(90deg, rgba(205, 127, 50, 0.15) 0%, rgba(205, 127, 50, 0.05) 100%);
+      border-left: 4px solid #cd7f32;
     }
 
-    .award-badge {
-      width: 60px;
-      height: 60px;
-      background: url('badge.png') no-repeat center center;
-      background-size: contain;
-      flex-shrink: 0;
+    .leaderboard-row.rank-3 .rank {
+      color: #cd7f32;
     }
 
-    .award-content {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    /* Current Player Highlight */
+    .leaderboard-row.current-player {
+      background: rgba(255, 255, 255, 0.08);
+      border-left: 4px solid var(--gold);
     }
 
-    .award-title {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 9px;
-      color: #d4a96a;
+    .you-tag {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--text-dark);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      margin-right: 6px;
+      border-radius: 2px;
+    }
+
+    /* Top Accuracy Highlight - removed, already shown in panel */
+    .leaderboard-row.top-accuracy .accuracy {
+      color: var(--sand-light);
+      font-weight: 700;
+    }
+
+    /* Play Again Button */
+    .footer {
+      text-align: center;
+      margin-top: 20px;
+      padding-bottom: 20px;
+    }
+
+    .play-again-btn {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-dark);
+      background: linear-gradient(180deg, var(--gold) 0%, var(--gold-dark) 100%);
+      border: 4px solid var(--brick-brown);
+      padding: 14px 40px;
+      cursor: pointer;
       text-transform: uppercase;
       letter-spacing: 1px;
+      transition: transform 0.1s ease, filter 0.1s ease;
     }
 
-    .award-winner {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 11px;
-      color: #fff;
+    .play-again-btn:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
     }
 
-    .award-stat {
-      font-family: 'Press Start 2P', cursive;
-      font-size: 11px;
-      color: #39ff14;
+    .play-again-btn:active {
+      transform: translateY(1px);
     }
 
-    .award-separator {
-      color: #d4a96a;
-      font-family: 'VT323', monospace;
-      font-size: 22px;
+    /* Responsive */
+    @media (max-width: 768px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+
+      .side-panel {
+        order: 2;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .leaderboard-wrapper {
+        order: 1;
+      }
+
+      .header {
+        margin-top: 60px;
+      }
     }
 
-    /* Highlight for top accuracy player in leaderboard */
-    .leaderboard-row.top-accuracy .accuracy {
-      color: #39ff14;
-    }
+    @media (max-width: 480px) {
+      .side-panel {
+        grid-template-columns: 1fr;
+      }
 
-    /* Regular rows subtle styling */
-    .leaderboard-row:not(.rank-1):not(.rank-2):not(.rank-3) {
-      border-color: rgba(212, 169, 106, 0.15);
-    }
+      .leaderboard-header,
+      .leaderboard-row {
+        grid-template-columns: 40px 1fr 60px 60px;
+        padding: 10px 12px;
+      }
 
-    .leaderboard-row:not(.rank-1):not(.rank-2):not(.rank-3):hover {
-      border-color: rgba(212, 169, 106, 0.4);
-      background: rgba(60, 20, 60, 0.9);
-    }
-
-    .leaderboard-row:not(.rank-1):not(.rank-2):not(.rank-3) .rank {
-      color: #d4a96a;
-      font-size: 12px;
-    }
-
-    /* Footer decoration */
-    .footer-decoration {
-      text-align: center;
-      padding: 20px;
-      margin-top: 20px;
-    }
-
-    .pixel-divider {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .pixel-square {
-      width: 8px;
-      height: 8px;
-      background: #d4a96a;
-      animation: pixelBlink 1s ease-in-out infinite;
-    }
-
-    .pixel-square:nth-child(2) { animation-delay: 0.2s; }
-    .pixel-square:nth-child(3) { animation-delay: 0.4s; }
-    .pixel-square:nth-child(4) { animation-delay: 0.6s; }
-    .pixel-square:nth-child(5) { animation-delay: 0.8s; }
-
-    @keyframes pixelBlink {
-      0%, 100% { opacity: 0.3; }
-      50% { opacity: 1; }
+      .game-over-title {
+        font-size: 28px;
+      }
     }
   </style>
 </head>
 <body>
-  <!-- Rising Embers Background -->
-  <div class="embers-container">
-    <div class="ember"></div>
-    <div class="ember"></div>
-    <div class="ember"></div>
-    <div class="ember"></div>
-    <div class="ember"></div>
-    <div class="ember"></div>
-    <div class="ember"></div>
-    <div class="ember"></div>
+  <!-- Background Image -->
+  <div class="bg-image"></div>
+
+  <!-- Floating Spell Particles -->
+  <div class="particles-container">
+    <div class="spell-orb blue"></div>
+    <div class="spell-orb green"></div>
+    <div class="spell-orb red"></div>
+    <div class="spell-orb gold"></div>
+    <div class="spell-orb blue"></div>
+    <div class="spell-orb green"></div>
+    <div class="spell-orb red"></div>
+    <div class="spell-orb gold"></div>
+    <div class="spell-orb blue"></div>
+    <div class="spell-orb green"></div>
+    <div class="spell-orb red"></div>
+    <div class="spell-orb gold"></div>
+    <div class="spell-orb blue"></div>
+    <div class="spell-orb green"></div>
+    <div class="spell-orb red"></div>
+    <div class="spell-orb gold"></div>
+  </div>
+
+  <div class="logo-container">
+    <img src="Wayarena logo.png" alt="WayArena" class="logo">
   </div>
 
   <div class="container">
     <header class="header">
       <h1 class="game-over-title">GAME OVER!</h1>
-      <div class="stat-chips">
-        <div class="stat-chip stuns">
-          <span>YOUR STUNS: <span class="count-up" data-target="30">0</span></span>
-        </div>
-        <div class="stat-chip stunned">
-          <span>GOT STUNNED: <span class="count-up" data-target="14">0</span></span>
-        </div>
-      </div>
     </header>
 
-    <div class="awards-banner" id="awards-banner">
-      <div class="award-badge"></div>
-      <div class="award-content">
-        <span class="award-title">TOP ACCURACY:</span>
-        <span class="award-winner" id="top-acc-name">Loading...</span>
-        <span class="award-separator">-</span>
-        <span class="award-stat" id="top-acc-value">0%</span>
+    <div class="main-content">
+      <!-- Side Panel -->
+      <div class="side-panel">
+        <!-- Sharpshooter Award -->
+        <div class="pixel-panel">
+          <div class="panel-title">Highest Accuracy</div>
+          <div class="sharpshooter-badge"></div>
+          <div class="sharpshooter-name" id="sharpshooter-name">Sanskar</div>
+          <div class="sharpshooter-accuracy" id="sharpshooter-accuracy">94%</div>
+        </div>
+
+        <!-- Your Stats -->
+        <div class="pixel-panel">
+          <div class="panel-title">Your Stats</div>
+          <div class="stat-row">
+            <span class="stat-label">Your Stuns</span>
+            <span class="stat-value" id="your-stuns">3</span>
+          </div>
+          <div class="stat-row">
+            <span class="stat-label">Got Stunned</span>
+            <span class="stat-value" id="got-stunned">14</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Leaderboard -->
+      <div class="leaderboard-wrapper">
+        <div class="leaderboard-header">
+          <span>#</span>
+          <span>Name</span>
+          <span>Stuns</span>
+          <span>Accuracy</span>
+        </div>
+        <div class="leaderboard" id="leaderboard">
+          <!-- Rows populated by JS -->
+        </div>
       </div>
     </div>
 
-    <div class="leaderboard-wrapper">
-      <div class="leaderboard-header-row">
-        <span>#</span>
-        <span>NAME</span>
-        <span>STUNS</span>
-        <span>ACC</span>
-      </div>
-      <div class="leaderboard" id="leaderboard"></div>
-      <div class="fade-bottom"></div>
-    </div>
-
-    <div class="footer-decoration">
-      <div class="pixel-divider">
-        <div class="pixel-square"></div>
-        <div class="pixel-square"></div>
-        <div class="pixel-square"></div>
-        <div class="pixel-square"></div>
-        <div class="pixel-square"></div>
-      </div>
-    </div>
+    <footer class="footer">
+      <button class="play-again-btn" onclick="restartGame()">Play Again</button>
+    </footer>
   </div>
 
   <script>
     const leaderboardData = [
-      { name: "karararan", stuns: 30, accuracy: 78 },
-      { name: "Sanskar", stuns: 21, accuracy: 82 },
-      { name: "ANKITG X DEEPAKC", stuns: 11, accuracy: 75 },
-      { name: "rachit", stuns: 8, accuracy: 89 },
-      { name: "Astha", stuns: 5, accuracy: 97 },
-      { name: "Shourya", stuns: 3, accuracy: 85 },
-      { name: "PixelMaster99", stuns: 3, accuracy: 71 },
-      { name: "ArenaKing", stuns: 2, accuracy: 68 },
-      { name: "StunLord", stuns: 2, accuracy: 65 },
-      { name: "BattleBot", stuns: 2, accuracy: 62 },
-      { name: "QuizWhiz", stuns: 1, accuracy: 58 },
-      { name: "NeonNinja", stuns: 1, accuracy: 55 },
-      { name: "RetroRaider", stuns: 1, accuracy: 52 },
-      { name: "PixelPuncher", stuns: 1, accuracy: 48 },
-      { name: "ArcadeAce", stuns: 0, accuracy: 45 },
-      { name: "GameGuru", stuns: 0, accuracy: 40 }
+      { name: 'karararan', stuns: 30, accuracy: 88 },
+      { name: 'Sanskar', stuns: 21, accuracy: 94 },
+      { name: 'ANKITG X DEEPAKC', stuns: 11, accuracy: 72 },
+      { name: 'rachit', stuns: 8, accuracy: 65 },
+      { name: 'Astha', stuns: 5, accuracy: 58 },
+      { name: 'Shourya', stuns: 3, accuracy: 45 },
+      { name: 'PlayerSeven', stuns: 3, accuracy: 42 },
+      { name: 'GamerEight', stuns: 2, accuracy: 38 },
+      { name: 'NinjaPlayer', stuns: 2, accuracy: 35 },
+      { name: 'TenthPlace', stuns: 1, accuracy: 30 },
+      { name: 'EleventhGuy', stuns: 1, accuracy: 28 },
+      { name: 'TwelfthOne', stuns: 0, accuracy: 20 },
     ];
 
-    function getMedal(rank) {
-      return '';
-    }
-
-    function getRankClass(rank) {
-      if (rank === 1) return 'rank-1';
-      if (rank === 2) return 'rank-2';
-      if (rank === 3) return 'rank-3';
-      return '';
-    }
-
-    function findTopAccuracyPlayer() {
-      return leaderboardData.reduce((top, player) => 
-        player.accuracy > top.accuracy ? player : top
-      , leaderboardData[0]);
-    }
-
-    function populateAwardsBanner() {
-      const topPlayer = findTopAccuracyPlayer();
-      document.getElementById('top-acc-name').textContent = topPlayer.name;
-      document.getElementById('top-acc-value').textContent = topPlayer.accuracy + '%';
-    }
+    const currentPlayerName = 'Shourya';
 
     function createLeaderboard() {
-      const container = document.getElementById('leaderboard');
-      const topPlayer = findTopAccuracyPlayer();
+      const leaderboard = document.getElementById('leaderboard');
       
+      // Find highest accuracy player
+      const highestAccuracy = Math.max(...leaderboardData.map(p => p.accuracy));
+      const topAccuracyPlayer = leaderboardData.find(p => p.accuracy === highestAccuracy);
+
+      // Update sharpshooter panel
+      document.getElementById('sharpshooter-name').textContent = topAccuracyPlayer.name;
+      document.getElementById('sharpshooter-accuracy').textContent = topAccuracyPlayer.accuracy + '%';
+
+      // Find current player stats
+      const currentPlayer = leaderboardData.find(p => p.name === currentPlayerName);
+      if (currentPlayer) {
+        document.getElementById('your-stuns').textContent = currentPlayer.stuns;
+        const playerIndex = leaderboardData.indexOf(currentPlayer);
+        document.getElementById('got-stunned').textContent = Math.floor(Math.random() * 15) + 5; // Mock data
+      }
+
+      // Create rows
       leaderboardData.forEach((player, index) => {
         const rank = index + 1;
-        const isTopAcc = player.name === topPlayer.name;
+        const isCurrentPlayer = player.name === currentPlayerName;
+        const isTopAccuracy = player.accuracy === highestAccuracy;
+        
+        let rowClasses = ['leaderboard-row'];
+        if (rank === 1) rowClasses.push('rank-1');
+        if (rank === 2) rowClasses.push('rank-2');
+        if (rank === 3) rowClasses.push('rank-3');
+        if (isCurrentPlayer) rowClasses.push('current-player');
+        if (isTopAccuracy) rowClasses.push('top-accuracy');
+
         const row = document.createElement('div');
-        row.className = `leaderboard-row ${getRankClass(rank)}${isTopAcc ? ' top-accuracy' : ''}`;
-        row.style.animationDelay = `${0.5 + (index * 0.08)}s`;
-        
+        row.className = rowClasses.join(' ');
+        row.style.animationDelay = `${index * 0.05}s`;
+
+        const nameDisplay = isCurrentPlayer 
+          ? `<span class="you-tag">YOU</span>${player.name}`
+          : player.name;
+
         row.innerHTML = `
-          <div class="rank">${getMedal(rank)}${rank}</div>
-          <div class="player-name">${player.name}</div>
-          <div class="stun-count">
-            <span class="count-up-row" data-target="${player.stuns}">0</span>
-          </div>
-          <div class="accuracy">
-            <span class="count-up-acc" data-target="${player.accuracy}">0</span>%
-          </div>
+          <span class="rank">${rank}</span>
+          <span class="player-name">${nameDisplay}</span>
+          <span class="stun-count">${player.stuns}</span>
+          <span class="accuracy">${player.accuracy}%</span>
         `;
-        
-        container.appendChild(row);
+
+        leaderboard.appendChild(row);
       });
     }
 
-    function animateCountUp(element, target, duration = 800) {
-      const startTime = performance.now();
-      const startValue = 0;
-      
-      function update(currentTime) {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const easeOut = 1 - Math.pow(1 - progress, 3);
-        const currentValue = Math.floor(startValue + (target - startValue) * easeOut);
-        
-        element.textContent = currentValue;
-        
-        if (progress < 1) {
-          requestAnimationFrame(update);
-        } else {
-          element.textContent = target;
-        }
-      }
-      
-      requestAnimationFrame(update);
+    function restartGame() {
+      alert('Starting new game...');
     }
 
-    function startCountUpAnimations() {
-      document.querySelectorAll('.count-up').forEach((el, index) => {
-        const target = parseInt(el.dataset.target, 10);
-        setTimeout(() => {
-          animateCountUp(el, target, 800);
-        }, 400 + (index * 100));
-      });
-
-      document.querySelectorAll('.count-up-row').forEach((el, index) => {
-        const target = parseInt(el.dataset.target, 10);
-        setTimeout(() => {
-          animateCountUp(el, target, 600);
-        }, 600 + (index * 80));
-      });
-
-      document.querySelectorAll('.count-up-acc').forEach((el, index) => {
-        const target = parseInt(el.dataset.target, 10);
-        setTimeout(() => {
-          animateCountUp(el, target, 600);
-        }, 600 + (index * 80));
-      });
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      populateAwardsBanner();
-      createLeaderboard();
-      startCountUpAnimations();
-    });
+    // Initialize
+    createLeaderboard();
   </script>
 </body>
 </html>
