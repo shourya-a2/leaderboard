@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WayArena - Game Over</title>
+  <title>WayArena - Game Ended</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -37,7 +37,8 @@
     body {
       min-height: 100vh;
       background: #2a1a0a;
-      font-family: 'Fredoka', sans-serif;
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 700;
       color: var(--white);
       overflow-x: hidden;
     }
@@ -241,7 +242,7 @@
     }
 
     .panel-title {
-      font-family: 'Fredoka', sans-serif;
+      font-family: 'Quicksand', sans-serif;
       font-size: 14px;
       font-weight: 600;
       color: var(--gold);
@@ -253,11 +254,11 @@
 
     /* Sharpshooter Panel */
     .sharpshooter-badge {
-      width: 48px;
-      height: 48px;
+      width: 80px;
+      height: 80px;
       background: url('Badge 2.png') no-repeat center center;
       background-size: contain;
-      margin: 0 auto 10px auto;
+      margin: 0 auto 8px auto;
     }
 
     .sharpshooter-name {
@@ -273,13 +274,6 @@
       font-weight: 700;
       color: var(--gold);
       text-align: center;
-    }
-
-    .sharpshooter-label {
-      font-size: 12px;
-      color: var(--sand-light);
-      text-align: center;
-      margin-top: 4px;
     }
 
     /* Your Stats */
@@ -336,6 +330,27 @@
       text-align: right;
     }
 
+    .sortable {
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.15s ease;
+    }
+
+    .sortable:hover {
+      color: var(--white);
+    }
+
+    .sort-arrow {
+      font-size: 10px;
+      margin-left: 2px;
+      display: inline-block;
+      transition: transform 0.2s ease;
+    }
+
+    .sort-arrow.asc {
+      transform: rotate(180deg);
+    }
+
     .leaderboard {
       max-height: calc(100vh - 280px);
       overflow-y: auto;
@@ -378,7 +393,7 @@
     }
 
     .player-name {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 600;
       color: var(--white);
       white-space: nowrap;
@@ -388,7 +403,7 @@
     }
 
     .stun-count, .accuracy {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 600;
       text-align: right;
       color: var(--sand-light);
@@ -450,15 +465,17 @@
       font-weight: 700;
     }
 
-    /* Play Again Button */
+    /* Footer Buttons */
     .footer {
-      text-align: center;
+      display: flex;
+      justify-content: center;
+      gap: 16px;
       margin-top: 20px;
       padding-bottom: 20px;
     }
 
     .play-again-btn {
-      font-family: 'Fredoka', sans-serif;
+      font-family: 'Quicksand', sans-serif;
       font-size: 18px;
       font-weight: 700;
       color: var(--text-dark);
@@ -477,6 +494,29 @@
     }
 
     .play-again-btn:active {
+      transform: translateY(1px);
+    }
+
+    .exit-btn {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--white);
+      background: rgba(0, 0, 0, 0.5);
+      border: 4px solid var(--brick-brown);
+      padding: 14px 40px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: transform 0.1s ease, filter 0.1s ease, background 0.1s ease;
+    }
+
+    .exit-btn:hover {
+      transform: translateY(-2px);
+      background: rgba(0, 0, 0, 0.7);
+    }
+
+    .exit-btn:active {
       transform: translateY(1px);
     }
 
@@ -544,12 +584,12 @@
   </div>
 
   <div class="logo-container">
-    <img src="Wayarena logo.png" alt="WayArena" class="logo">
+    <img src="Wayarena updated logo.png" alt="WayArena" class="logo">
   </div>
 
   <div class="container">
     <header class="header">
-      <h1 class="game-over-title">GAME OVER!</h1>
+      <h1 class="game-over-title">GAME ENDED</h1>
     </header>
 
     <div class="main-content">
@@ -582,8 +622,8 @@
         <div class="leaderboard-header">
           <span>#</span>
           <span>Name</span>
-          <span>Stuns</span>
-          <span>Accuracy</span>
+          <span class="sortable" data-sort="stuns" onclick="sortLeaderboard('stuns')">Stuns <span class="sort-arrow" id="stuns-arrow">▼</span></span>
+          <span class="sortable" data-sort="accuracy" onclick="sortLeaderboard('accuracy')">Accuracy <span class="sort-arrow" id="accuracy-arrow">▼</span></span>
         </div>
         <div class="leaderboard" id="leaderboard">
           <!-- Rows populated by JS -->
@@ -592,7 +632,8 @@
     </div>
 
     <footer class="footer">
-      <button class="play-again-btn" onclick="restartGame()">Play Again</button>
+      <button class="play-again-btn" onclick="restartGame()">Play Again (1 min)</button>
+      <button class="exit-btn" onclick="exitGame()">Exit Game</button>
     </footer>
   </div>
 
@@ -613,27 +654,37 @@
     ];
 
     const currentPlayerName = 'Shourya';
+    
+    let currentSort = { column: 'stuns', ascending: false };
 
-    function createLeaderboard() {
-      const leaderboard = document.getElementById('leaderboard');
-      
-      // Find highest accuracy player
-      const highestAccuracy = Math.max(...leaderboardData.map(p => p.accuracy));
-      const topAccuracyPlayer = leaderboardData.find(p => p.accuracy === highestAccuracy);
-
-      // Update sharpshooter panel
-      document.getElementById('sharpshooter-name').textContent = topAccuracyPlayer.name;
-      document.getElementById('sharpshooter-accuracy').textContent = topAccuracyPlayer.accuracy + '%';
-
-      // Find current player stats
-      const currentPlayer = leaderboardData.find(p => p.name === currentPlayerName);
-      if (currentPlayer) {
-        document.getElementById('your-stuns').textContent = currentPlayer.stuns;
-        const playerIndex = leaderboardData.indexOf(currentPlayer);
-        document.getElementById('got-stunned').textContent = Math.floor(Math.random() * 15) + 5; // Mock data
+    function sortLeaderboard(column) {
+      if (currentSort.column === column) {
+        currentSort.ascending = !currentSort.ascending;
+      } else {
+        currentSort.column = column;
+        currentSort.ascending = false;
       }
 
-      // Create rows
+      leaderboardData.sort((a, b) => {
+        const diff = b[column] - a[column];
+        return currentSort.ascending ? -diff : diff;
+      });
+
+      document.getElementById('stuns-arrow').className = 'sort-arrow';
+      document.getElementById('accuracy-arrow').className = 'sort-arrow';
+      
+      const activeArrow = document.getElementById(`${column}-arrow`);
+      activeArrow.className = currentSort.ascending ? 'sort-arrow asc' : 'sort-arrow';
+
+      const leaderboard = document.getElementById('leaderboard');
+      leaderboard.innerHTML = '';
+      renderLeaderboardRows();
+    }
+
+    function renderLeaderboardRows() {
+      const leaderboard = document.getElementById('leaderboard');
+      const highestAccuracy = Math.max(...leaderboardData.map(p => p.accuracy));
+
       leaderboardData.forEach((player, index) => {
         const rank = index + 1;
         const isCurrentPlayer = player.name === currentPlayerName;
@@ -665,8 +716,32 @@
       });
     }
 
+    function createLeaderboard() {
+      // Find highest accuracy player
+      const highestAccuracy = Math.max(...leaderboardData.map(p => p.accuracy));
+      const topAccuracyPlayer = leaderboardData.find(p => p.accuracy === highestAccuracy);
+
+      // Update sharpshooter panel
+      document.getElementById('sharpshooter-name').textContent = topAccuracyPlayer.name;
+      document.getElementById('sharpshooter-accuracy').textContent = topAccuracyPlayer.accuracy + '%';
+
+      // Find current player stats
+      const currentPlayer = leaderboardData.find(p => p.name === currentPlayerName);
+      if (currentPlayer) {
+        document.getElementById('your-stuns').textContent = currentPlayer.stuns;
+        document.getElementById('got-stunned').textContent = Math.floor(Math.random() * 15) + 5;
+      }
+
+      // Render rows
+      renderLeaderboardRows();
+    }
+
     function restartGame() {
       alert('Starting new game...');
+    }
+
+    function exitGame() {
+      alert('Exiting game...');
     }
 
     // Initialize

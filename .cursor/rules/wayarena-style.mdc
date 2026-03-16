@@ -1,0 +1,39 @@
+---
+description: WayArena UI style guide - colors, typography, components, and design patterns
+globs: "**/*.html"
+alwaysApply: false
+---
+
+# WayArena UI Style Guide
+
+When working on WayArena UI files, follow the master style guide at `WAYARENA-STYLE-GUIDE.html`.
+
+## Fonts (Only 2)
+- **Press Start 2P**: Headers, titles, labels, badges, buttons
+- **Fredoka**: Player names, numbers, data, body text
+
+## Color Palette
+```css
+--wa-gold-primary: #FFD700;     /* Titles, highlights */
+--wa-gold-sandy: #d4a96a;       /* Borders, accents */
+--wa-bg-dark: #1a120a;          /* Darkest background */
+--wa-bg-brown: rgba(45,30,20,0.85); /* Panel backgrounds */
+--wa-success-green: #22C55E;    /* Correct, positive */
+--wa-error-red: #FF4444;        /* Wrong, negative */
+--wa-health-pink: #FF69B4;      /* Health bars */
+--wa-mana-blue: #00BFFF;        /* Mana/spell energy */
+```
+
+## Key Rules
+1. Use pixel shadows (hard-edged): `4px 4px 0 rgba(0,0,0,0.4)`
+2. Keep corners sharp (`border-radius: 0`) for pixel art aesthetic
+3. Use brown-tinted backgrounds, not purple
+4. Copy `:root` CSS variables from the style guide to new files
+
+## Don'ts
+- Don't use Inter, Quicksand, Segoe UI, or other fonts
+- Don't use blur shadows
+- Don't add new colors without updating the style guide
+- Don't use rounded corners for main containers
+
+Reference: `WAYARENA-STYLE-GUIDE.html` for full details, components, and code examples.
